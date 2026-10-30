@@ -141,6 +141,19 @@ MODEL_API_KEY=your_meta_model_api_key_here
 
 Never commit `.env`. The repository includes only `.env.example`.
 
+### One-command demo (recommended)
+
+Start the controlled laboratory, generated bridge, and dashboard together:
+
+```bash
+uv run protocolsmith
+```
+
+The dashboard opens automatically at `http://127.0.0.1:8001`. Press
+`Control+C` once in the launcher Terminal to stop every service cleanly.
+
+### Manual start (optional)
+
 ### Start the controlled API laboratory
 
 ```bash
@@ -242,6 +255,7 @@ src/protocolsmith_meta_hackathon/
   lab_api.py          Controlled incompatible API versions
   bridge_api.py       Constrained adapter runtime
   dashboard_api.py    Interactive evidence dashboard
+  demo.py             One-command local demo launcher
 
 scripts/
   check_meta_api.py   Meta Model API connection test
@@ -282,5 +296,4 @@ See [HACKATHON.md](HACKATHON.md) for the complete declaration.
 
 ## License
 
-ProtocolSmith is available under the [MIT License](LICENSE).# protocolsmith-meta-hackathon
-ProtocolSmith is a black-box API migration agent built by Muhammad Rafae Khan for the Meta Global AI Developer Hackathon.
+ProtocolSmith is available under the [MIT License](LICENSE).

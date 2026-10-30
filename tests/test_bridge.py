@@ -9,6 +9,7 @@ from protocolsmith_meta_hackathon.bridge_api import (
     get_path,
     is_mapped_modern_error,
 )
+from protocolsmith_meta_hackathon.dashboard_api import evaluate_live_proof
 
 
 def modern_order() -> dict:
@@ -105,4 +106,121 @@ def test_non_usd_currency_fails_closed() -> None:
 
     with pytest.raises(AdapterError):
         adapt_item(item)
+
+
+def proof_response(
+    body: dict,
+    status_code: int = 200,
+    warning: str | None = None,
+) -> dict:
+    return {
+        "url": "http://example.test",
+        "status_code": status_code,
+        "body": body,
+        "adapter": None,
+        "warning": warning,
+    }
+
+
+def test_live_proof_requires_full_contract_equivalence() -> None:
+    legacy = proof_response(
+        {
+            "customer_id": "customer-123",
+            "orders": [
+                {
+                    "id": "order-1001",
+                    "total_cents": 2599,
+                    "created_at": "2026-10-20T14:30:00Z",
+                    "status": "paid",
+                }
+            ],
+            "next_page": None,
+        }
+    )
+    modern = proof_response({"data": [modern_order()]})
+    bridge = proof_response(
+        {
+            "customer_id": "customer-123",
+            "orders": [
+                {
+                    "id": "order-1001",
+                    "total_cents": 2599,
+                    "created_at": "2026-10-20T00:00:00Z",
+                    "status": "paid",
+                }
+            ],
+            "next_page": None,
+        },
+        warning="created_at reconstructed at midnight UTC",
+    )
+    missing_body = {
+        "detail": {
+            "code": "CUSTOMER_NOT_FOUND",
+            "message": "Customer does not exist",
+        }
+    }
+
+    evaluation = evaluate_live_proof(
+        legacy,
+        modern,
+        bridge,
+        proof_response(missing_body, status_code=404),
+        proof_response(missing_body, status_code=404),
+    )
+
+    assert evaluation["result"] == "passed"
+    assert all(check["passed"] for check in evaluation["checks"])
+
+
+def test_live_proof_rejects_wrong_bridge_value() -> None:
+    legacy = proof_response(
+        {
+            "customer_id": "customer-123",
+            "orders": [
+                {
+                    "id": "order-1001",
+                    "total_cents": 2599,
+                    "created_at": "2026-10-20T14:30:00Z",
+                    "status": "paid",
+                }
+            ],
+            "next_page": None,
+        }
+    )
+    bridge = proof_response(
+        {
+            "customer_id": "customer-123",
+            "orders": [
+                {
+                    "id": "order-1001",
+                    "total_cents": 1,
+                    "created_at": "2026-10-20T00:00:00Z",
+                    "status": "paid",
+                }
+            ],
+            "next_page": None,
+        },
+        warning="created_at reconstructed at midnight UTC",
+    )
+    missing_body = {
+        "detail": {
+            "code": "CUSTOMER_NOT_FOUND",
+            "message": "Customer does not exist",
+        }
+    }
+
+    evaluation = evaluate_live_proof(
+        legacy,
+        proof_response({"data": [modern_order()]}),
+        bridge,
+        proof_response(missing_body, status_code=404),
+        proof_response(missing_body, status_code=404),
+    )
+
+    assert evaluation["result"] == "failed"
+    assert any(
+        check["name"] == "bridge preserves monetary value"
+        and not check["passed"]
+        for check in evaluation["checks"]
+    )
 

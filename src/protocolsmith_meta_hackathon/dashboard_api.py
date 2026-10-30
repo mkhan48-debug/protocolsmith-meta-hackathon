@@ -117,6 +117,95 @@ def response_payload(response: httpx.Response) -> dict[str, Any]:
     }
 
 
+def evaluate_live_proof(
+    legacy: dict[str, Any],
+    modern: dict[str, Any],
+    bridge: dict[str, Any],
+    legacy_missing: dict[str, Any],
+    bridge_missing: dict[str, Any],
+) -> dict[str, Any]:
+    legacy_body = legacy["body"]
+    modern_body = modern["body"]
+    bridge_body = bridge["body"]
+
+    legacy_orders = (
+        legacy_body.get("orders", [])
+        if isinstance(legacy_body, dict)
+        else []
+    )
+    bridge_orders = (
+        bridge_body.get("orders", [])
+        if isinstance(bridge_body, dict)
+        else []
+    )
+
+    legacy_order = legacy_orders[0] if len(legacy_orders) == 1 else {}
+    bridge_order = bridge_orders[0] if len(bridge_orders) == 1 else {}
+
+    checks = {
+        "legacy contract succeeds": (
+            legacy["status_code"] == 200
+            and len(legacy_orders) == 1
+        ),
+        "modern API is directly incompatible": (
+            modern["status_code"] == 200
+            and isinstance(modern_body, dict)
+            and "orders" not in modern_body
+        ),
+        "bridge restores success status": bridge["status_code"] == 200,
+        "bridge restores customer identifier": (
+            isinstance(legacy_body, dict)
+            and isinstance(bridge_body, dict)
+            and legacy_body.get("customer_id")
+            == bridge_body.get("customer_id")
+        ),
+        "bridge restores one-order collection": (
+            len(legacy_orders) == len(bridge_orders) == 1
+        ),
+        "bridge preserves order id": (
+            legacy_order.get("id") == bridge_order.get("id")
+        ),
+        "bridge preserves monetary value": (
+            legacy_order.get("total_cents")
+            == bridge_order.get("total_cents")
+        ),
+        "bridge preserves status": (
+            legacy_order.get("status")
+            == bridge_order.get("status")
+        ),
+        "bridge preserves calendar date": (
+            str(legacy_order.get("created_at", ""))[:10]
+            == str(bridge_order.get("created_at", ""))[:10]
+        ),
+        "bridge preserves pagination": (
+            isinstance(legacy_body, dict)
+            and isinstance(bridge_body, dict)
+            and legacy_body.get("next_page")
+            == bridge_body.get("next_page")
+        ),
+        "bridge discloses lossy reconstruction": (
+            isinstance(bridge.get("warning"), str)
+            and "midnight UTC" in bridge["warning"]
+        ),
+        "bridge restores missing-customer status": (
+            legacy_missing["status_code"]
+            == bridge_missing["status_code"]
+            == 404
+        ),
+        "bridge restores missing-customer body": (
+            legacy_missing["body"] == bridge_missing["body"]
+        ),
+    }
+
+    return {
+        "result": "passed" if all(checks.values()) else "failed",
+        "checks": [
+            {"name": name, "passed": passed}
+            for name, passed in checks.items()
+        ],
+    }
+
+
 @app.get("/api/live-proof")
 async def live_proof():
     legacy_url = (
@@ -131,13 +220,27 @@ async def live_proof():
         f"{BRIDGE_BASE_URL}/customers/"
         "customer-123/orders"
     )
+    legacy_missing_url = (
+        f"{LAB_BASE_URL}/v1/customers/"
+        "missing-customer/orders"
+    )
+    bridge_missing_url = (
+        f"{BRIDGE_BASE_URL}/customers/"
+        "missing-customer/orders"
+    )
 
     try:
         async with httpx.AsyncClient(
             timeout=10.0,
             follow_redirects=False,
         ) as client:
-            legacy_response, modern_response, bridge_response = (
+            (
+                legacy_response,
+                modern_response,
+                bridge_response,
+                legacy_missing_response,
+                bridge_missing_response,
+            ) = (
                 await asyncio.gather(
                     client.get(
                         legacy_url,
@@ -149,6 +252,14 @@ async def live_proof():
                     ),
                     client.get(
                         bridge_url,
+                        params={"page_size": 1},
+                    ),
+                    client.get(
+                        legacy_missing_url,
+                        params={"page_size": 1},
+                    ),
+                    client.get(
+                        bridge_missing_url,
                         params={"page_size": 1},
                     ),
                 )
@@ -168,54 +279,41 @@ async def live_proof():
     legacy = response_payload(legacy_response)
     modern = response_payload(modern_response)
     bridge = response_payload(bridge_response)
-
-    legacy_body = legacy["body"]
-    modern_body = modern["body"]
-    bridge_body = bridge["body"]
-
-    legacy_compatible = (
-        legacy["status_code"] == 200
-        and isinstance(legacy_body, dict)
-        and "orders" in legacy_body
-    )
-    modern_directly_incompatible = (
-        modern["status_code"] == 200
-        and isinstance(modern_body, dict)
-        and "orders" not in modern_body
-    )
-    bridge_compatible = (
-        bridge["status_code"] == 200
-        and isinstance(bridge_body, dict)
-        and "orders" in bridge_body
-        and len(bridge_body["orders"]) == 1
-    )
-
-    overall_passed = (
-        legacy_compatible
-        and modern_directly_incompatible
-        and bridge_compatible
+    legacy_missing = response_payload(legacy_missing_response)
+    bridge_missing = response_payload(bridge_missing_response)
+    evaluation = evaluate_live_proof(
+        legacy,
+        modern,
+        bridge,
+        legacy_missing,
+        bridge_missing,
     )
 
     return {
-        "result": "passed" if overall_passed else "failed",
+        "result": evaluation["result"],
+        "checks": evaluation["checks"],
         "steps": {
             "legacy_v1": {
                 "verdict": (
-                    "pass" if legacy_compatible else "fail"
+                    "pass"
+                    if evaluation["checks"][0]["passed"]
+                    else "fail"
                 ),
                 **legacy,
             },
             "modern_v2_direct": {
                 "verdict": (
                     "expected-failure"
-                    if modern_directly_incompatible
+                    if evaluation["checks"][1]["passed"]
                     else "unexpected"
                 ),
                 **modern,
             },
             "protocolsmith_bridge": {
                 "verdict": (
-                    "pass" if bridge_compatible else "fail"
+                    "pass"
+                    if evaluation["result"] == "passed"
+                    else "fail"
                 ),
                 **bridge,
             },
