@@ -1,0 +1,227 @@
+{
+  "generated_at": "2026-10-30T07:02:49.498294+00:00",
+  "result": "passed",
+  "summary": {
+    "checks_total": 14,
+    "checks_passed": 14,
+    "checks_failed": 0
+  },
+  "targets": {
+    "legacy": "http://127.0.0.1:8000/v1",
+    "modern": "http://127.0.0.1:8000/v2",
+    "bridge": "http://127.0.0.1:8001"
+  },
+  "checks": [
+    {
+      "name": "legacy API succeeds",
+      "passed": true,
+      "evidence": "status=200"
+    },
+    {
+      "name": "modern API is directly incompatible",
+      "passed": true,
+      "evidence": "modern response intentionally has no legacy orders field"
+    },
+    {
+      "name": "bridge returns legacy success status",
+      "passed": true,
+      "evidence": "legacy=200, bridge=200"
+    },
+    {
+      "name": "root customer identifier preserved",
+      "passed": true,
+      "evidence": "customer_id values compared"
+    },
+    {
+      "name": "one-order collection size preserved",
+      "passed": true,
+      "evidence": "legacy_count=1, bridge_count=1"
+    },
+    {
+      "name": "order field preserved: id",
+      "passed": true,
+      "evidence": "legacy='order-1001', bridge='order-1001'"
+    },
+    {
+      "name": "order field preserved: total_cents",
+      "passed": true,
+      "evidence": "legacy=2599, bridge=2599"
+    },
+    {
+      "name": "order field preserved: status",
+      "passed": true,
+      "evidence": "legacy='paid', bridge='paid'"
+    },
+    {
+      "name": "created_at calendar date preserved",
+      "passed": true,
+      "evidence": "legacy_date=2026-10-20, bridge_date=2026-10-20"
+    },
+    {
+      "name": "page-size translation preserves two results",
+      "passed": true,
+      "evidence": "legacy_count=2, bridge_count=2"
+    },
+    {
+      "name": "pagination value preserved",
+      "passed": true,
+      "evidence": "next_page values compared"
+    },
+    {
+      "name": "missing-customer status restored",
+      "passed": true,
+      "evidence": "legacy=404, bridge=404"
+    },
+    {
+      "name": "missing-customer error body restored",
+      "passed": true,
+      "evidence": "legacy and bridge error bodies compared exactly"
+    },
+    {
+      "name": "lossy date conversion disclosed",
+      "passed": true,
+      "evidence": "warning='created_at reconstructed at midnight UTC because the modern API discarded the original time'"
+    }
+  ],
+  "known_loss": {
+    "field": "created_at",
+    "reason": "The modern API retains only the calendar date. ProtocolSmith reconstructs midnight UTC and exposes an explicit response warning."
+  },
+  "evidence": {
+    "legacy_one": {
+      "url": "http://127.0.0.1:8000/v1/customers/customer-123/orders?page_size=1",
+      "status_code": 200,
+      "body": {
+        "customer_id": "customer-123",
+        "orders": [
+          {
+            "id": "order-1001",
+            "total_cents": 2599,
+            "created_at": "2026-10-20T14:30:00Z",
+            "status": "paid"
+          }
+        ],
+        "next_page": null
+      },
+      "adapter_warning": null
+    },
+    "modern_direct": {
+      "url": "http://127.0.0.1:8000/v2/customers/customer-123/orders?page_size=1",
+      "status_code": 200,
+      "body": {
+        "customer": {
+          "id": "customer-123"
+        },
+        "data": [
+          {
+            "order_id": "order-1001",
+            "amount": {
+              "value": "25.99",
+              "currency": "USD"
+            },
+            "created": "2026-10-20",
+            "state": "paid"
+          },
+          {
+            "order_id": "order-1002",
+            "amount": {
+              "value": "10.99",
+              "currency": "USD"
+            },
+            "created": "2026-10-21",
+            "state": "shipped"
+          }
+        ],
+        "pagination": {
+          "next_cursor": null
+        }
+      },
+      "adapter_warning": null
+    },
+    "bridge_one": {
+      "url": "http://127.0.0.1:8001/customers/customer-123/orders?page_size=1",
+      "status_code": 200,
+      "body": {
+        "customer_id": "customer-123",
+        "orders": [
+          {
+            "id": "order-1001",
+            "status": "paid",
+            "total_cents": 2599,
+            "created_at": "2026-10-20T00:00:00Z"
+          }
+        ],
+        "next_page": null
+      },
+      "adapter_warning": "created_at reconstructed at midnight UTC because the modern API discarded the original time"
+    },
+    "legacy_two": {
+      "url": "http://127.0.0.1:8000/v1/customers/customer-123/orders?page_size=2",
+      "status_code": 200,
+      "body": {
+        "customer_id": "customer-123",
+        "orders": [
+          {
+            "id": "order-1001",
+            "total_cents": 2599,
+            "created_at": "2026-10-20T14:30:00Z",
+            "status": "paid"
+          },
+          {
+            "id": "order-1002",
+            "total_cents": 1099,
+            "created_at": "2026-10-21T09:15:00Z",
+            "status": "shipped"
+          }
+        ],
+        "next_page": null
+      },
+      "adapter_warning": null
+    },
+    "bridge_two": {
+      "url": "http://127.0.0.1:8001/customers/customer-123/orders?page_size=2",
+      "status_code": 200,
+      "body": {
+        "customer_id": "customer-123",
+        "orders": [
+          {
+            "id": "order-1001",
+            "status": "paid",
+            "total_cents": 2599,
+            "created_at": "2026-10-20T00:00:00Z"
+          },
+          {
+            "id": "order-1002",
+            "status": "shipped",
+            "total_cents": 1099,
+            "created_at": "2026-10-21T00:00:00Z"
+          }
+        ],
+        "next_page": null
+      },
+      "adapter_warning": "created_at reconstructed at midnight UTC because the modern API discarded the original time"
+    },
+    "legacy_missing": {
+      "url": "http://127.0.0.1:8000/v1/customers/missing-customer/orders?page_size=1",
+      "status_code": 404,
+      "body": {
+        "detail": {
+          "code": "CUSTOMER_NOT_FOUND",
+          "message": "Customer does not exist"
+        }
+      },
+      "adapter_warning": null
+    },
+    "bridge_missing": {
+      "url": "http://127.0.0.1:8001/customers/missing-customer/orders?page_size=1",
+      "status_code": 404,
+      "body": {
+        "detail": {
+          "code": "CUSTOMER_NOT_FOUND",
+          "message": "Customer does not exist"
+        }
+      },
+      "adapter_warning": null
+    }
+  }
+}
