@@ -1,0 +1,74 @@
+{
+  "generated_at": "2026-10-30T07:05:55.448925+00:00",
+  "model": "muse-spark-1.3",
+  "mode": "active_model_designed_experiment",
+  "proposal": {
+    "name": "page_size_to_limit_value_1_probe",
+    "hypothesis": "Legacy $.params.page_size renames to modern $.params.limit with direct integer passthrough (limit = page_size); querying customer-123 with value 1 on both APIs will return exactly 1 item if mapping holds.",
+    "customer_id": "customer-123",
+    "legacy_parameter": "page_size",
+    "modern_parameter": "limit",
+    "value": 1,
+    "information_gain": "Customer-123 has exactly two records, so value 1 is discriminating: a correctly mapped limit truncates to 1 item while an ignored/misnamed param falls back to default 2 items. Prior value-2 observation is non-discriminating because both correct and ignored params yield 2 items. This paired value-1 test therefore tests the rename causally rather than merely repeating default behavior."
+  },
+  "execution": {
+    "legacy": {
+      "url": "http://127.0.0.1:8000/v1/customers/customer-123/orders?page_size=1",
+      "parameter": "page_size",
+      "value": 1,
+      "status_code": 200,
+      "item_count": 1,
+      "body": {
+        "customer_id": "customer-123",
+        "orders": [
+          {
+            "id": "order-1001",
+            "total_cents": 2599,
+            "created_at": "2026-10-20T14:30:00Z",
+            "status": "paid"
+          }
+        ],
+        "next_page": null
+      }
+    },
+    "modern": {
+      "url": "http://127.0.0.1:8000/v2/customers/customer-123/orders?limit=1",
+      "parameter": "limit",
+      "value": 1,
+      "status_code": 200,
+      "item_count": 1,
+      "body": {
+        "customer": {
+          "id": "customer-123"
+        },
+        "data": [
+          {
+            "order_id": "order-1001",
+            "amount": {
+              "value": "25.99",
+              "currency": "USD"
+            },
+            "created": "2026-10-20",
+            "state": "paid"
+          }
+        ],
+        "pagination": {
+          "next_cursor": null
+        }
+      }
+    },
+    "deterministic_confirmation": true
+  },
+  "assessment": {
+    "hypothesis_supported": true,
+    "finding": "Both APIs returned 200 with item_count 1 when value 1 applied: legacy /v1/customers/customer-123/orders?page_size=1 returned 1 item and modern /v2/customers/customer-123/orders?limit=1 returned 1 item, matching predicted truncation from 2-item dataset to 1 item",
+    "discovered_mapping": "$.params.page_size -> $.params.limit (limit = page_size)",
+    "confidence": 0.85,
+    "recommended_next_probe": "Query both endpoints with no pagination params to confirm 2-item default baseline, then cross-test limit=1 on v1 and page_size=1 on v2 to verify names are version-specific and ignored when swapped"
+  },
+  "final_verdict": {
+    "deterministically_confirmed": true,
+    "model_supported": true,
+    "accepted": true
+  }
+}
