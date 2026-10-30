@@ -1,0 +1,54 @@
+{
+  "generated_at": "2026-10-30T06:27:22.354885+00:00",
+  "model": "muse-spark-1.3",
+  "source_report": "artifacts/discovery_report.json",
+  "spec": {
+    "query_rules": [
+      {
+        "legacy_name": "page_size",
+        "modern_name": "limit"
+      }
+    ],
+    "modern_collection_path": "data",
+    "legacy_collection_field": "orders",
+    "root_field_rules": [
+      {
+        "legacy_field": "customer_id",
+        "modern_path": "customer.id",
+        "operation": "copy"
+      }
+    ],
+    "item_field_rules": [
+      {
+        "legacy_field": "id",
+        "modern_path": "order_id",
+        "operation": "copy"
+      },
+      {
+        "legacy_field": "status",
+        "modern_path": "state",
+        "operation": "copy"
+      },
+      {
+        "legacy_field": "total_cents",
+        "modern_path": "amount.value",
+        "operation": "decimal_dollars_to_integer_cents"
+      },
+      {
+        "legacy_field": "created_at",
+        "modern_path": "created",
+        "operation": "date_to_iso_midnight_utc"
+      }
+    ],
+    "modern_pagination_path": "pagination.next_cursor",
+    "legacy_pagination_field": "next_page",
+    "error_rule": {
+      "modern_indicator_path": "error.type",
+      "modern_indicator_value": "unknown_customer",
+      "modern_customer_path": "error.customer",
+      "legacy_status_code": 404,
+      "legacy_error_code": "CUSTOMER_NOT_FOUND",
+      "legacy_error_message": "Customer does not exist"
+    }
+  }
+}
