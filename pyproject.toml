@@ -6,7 +6,10 @@ authors = [
     { name = "Muhammad Rafae Khan", email = "mkhan48-debug@users.noreply.github.com" }
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "openai>=3.41.0",
+    "python-dotenv>=1.2.4",
+]
 
 [project.scripts]
 protocolsmith-meta-hackathon = "protocolsmith_meta_hackathon:main"
