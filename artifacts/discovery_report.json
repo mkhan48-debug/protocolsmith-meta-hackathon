@@ -1,0 +1,548 @@
+{
+  "generated_at": "2026-10-30T06:19:01.249600+00:00",
+  "model": "muse-spark-1.3",
+  "legacy_base_url": "http://127.0.0.1:8000/v1",
+  "modern_base_url": "http://127.0.0.1:8000/v2",
+  "evidence": [
+    {
+      "experiment": "one_existing_order",
+      "purpose": "Compare one successful result.",
+      "legacy": {
+        "request": {
+          "method": "GET",
+          "url": "http://127.0.0.1:8000/v1/customers/customer-123/orders?page_size=1",
+          "customer_id": "customer-123",
+          "params": {
+            "page_size": 1
+          }
+        },
+        "response": {
+          "status_code": 200,
+          "body": {
+            "customer_id": "customer-123",
+            "orders": [
+              {
+                "id": "order-1001",
+                "total_cents": 2599,
+                "created_at": "2026-10-20T14:30:00Z",
+                "status": "paid"
+              }
+            ],
+            "next_page": null
+          },
+          "shape": [
+            {
+              "path": "$",
+              "type": "object"
+            },
+            {
+              "path": "$.customer_id",
+              "type": "str",
+              "example": "customer-123"
+            },
+            {
+              "path": "$.next_page",
+              "type": "NoneType",
+              "example": null
+            },
+            {
+              "path": "$.orders",
+              "type": "array",
+              "length": 1
+            },
+            {
+              "path": "$.orders[]",
+              "type": "object"
+            },
+            {
+              "path": "$.orders[].created_at",
+              "type": "str",
+              "example": "2026-10-20T14:30:00Z"
+            },
+            {
+              "path": "$.orders[].id",
+              "type": "str",
+              "example": "order-1001"
+            },
+            {
+              "path": "$.orders[].status",
+              "type": "str",
+              "example": "paid"
+            },
+            {
+              "path": "$.orders[].total_cents",
+              "type": "int",
+              "example": 2599
+            }
+          ]
+        }
+      },
+      "modern": {
+        "request": {
+          "method": "GET",
+          "url": "http://127.0.0.1:8000/v2/customers/customer-123/orders?limit=1",
+          "customer_id": "customer-123",
+          "params": {
+            "limit": 1
+          }
+        },
+        "response": {
+          "status_code": 200,
+          "body": {
+            "customer": {
+              "id": "customer-123"
+            },
+            "data": [
+              {
+                "order_id": "order-1001",
+                "amount": {
+                  "value": "25.99",
+                  "currency": "USD"
+                },
+                "created": "2026-10-20",
+                "state": "paid"
+              }
+            ],
+            "pagination": {
+              "next_cursor": null
+            }
+          },
+          "shape": [
+            {
+              "path": "$",
+              "type": "object"
+            },
+            {
+              "path": "$.customer",
+              "type": "object"
+            },
+            {
+              "path": "$.customer.id",
+              "type": "str",
+              "example": "customer-123"
+            },
+            {
+              "path": "$.data",
+              "type": "array",
+              "length": 1
+            },
+            {
+              "path": "$.data[]",
+              "type": "object"
+            },
+            {
+              "path": "$.data[].amount",
+              "type": "object"
+            },
+            {
+              "path": "$.data[].amount.currency",
+              "type": "str",
+              "example": "USD"
+            },
+            {
+              "path": "$.data[].amount.value",
+              "type": "str",
+              "example": "25.99"
+            },
+            {
+              "path": "$.data[].created",
+              "type": "str",
+              "example": "2026-10-20"
+            },
+            {
+              "path": "$.data[].order_id",
+              "type": "str",
+              "example": "order-1001"
+            },
+            {
+              "path": "$.data[].state",
+              "type": "str",
+              "example": "paid"
+            },
+            {
+              "path": "$.pagination",
+              "type": "object"
+            },
+            {
+              "path": "$.pagination.next_cursor",
+              "type": "NoneType",
+              "example": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "experiment": "two_existing_orders",
+      "purpose": "Reveal pagination and repeated item structure.",
+      "legacy": {
+        "request": {
+          "method": "GET",
+          "url": "http://127.0.0.1:8000/v1/customers/customer-123/orders?page_size=2",
+          "customer_id": "customer-123",
+          "params": {
+            "page_size": 2
+          }
+        },
+        "response": {
+          "status_code": 200,
+          "body": {
+            "customer_id": "customer-123",
+            "orders": [
+              {
+                "id": "order-1001",
+                "total_cents": 2599,
+                "created_at": "2026-10-20T14:30:00Z",
+                "status": "paid"
+              },
+              {
+                "id": "order-1002",
+                "total_cents": 1099,
+                "created_at": "2026-10-21T09:15:00Z",
+                "status": "shipped"
+              }
+            ],
+            "next_page": null
+          },
+          "shape": [
+            {
+              "path": "$",
+              "type": "object"
+            },
+            {
+              "path": "$.customer_id",
+              "type": "str",
+              "example": "customer-123"
+            },
+            {
+              "path": "$.next_page",
+              "type": "NoneType",
+              "example": null
+            },
+            {
+              "path": "$.orders",
+              "type": "array",
+              "length": 2
+            },
+            {
+              "path": "$.orders[]",
+              "type": "object"
+            },
+            {
+              "path": "$.orders[].created_at",
+              "type": "str",
+              "example": "2026-10-20T14:30:00Z"
+            },
+            {
+              "path": "$.orders[].id",
+              "type": "str",
+              "example": "order-1001"
+            },
+            {
+              "path": "$.orders[].status",
+              "type": "str",
+              "example": "paid"
+            },
+            {
+              "path": "$.orders[].total_cents",
+              "type": "int",
+              "example": 2599
+            }
+          ]
+        }
+      },
+      "modern": {
+        "request": {
+          "method": "GET",
+          "url": "http://127.0.0.1:8000/v2/customers/customer-123/orders?limit=2",
+          "customer_id": "customer-123",
+          "params": {
+            "limit": 2
+          }
+        },
+        "response": {
+          "status_code": 200,
+          "body": {
+            "customer": {
+              "id": "customer-123"
+            },
+            "data": [
+              {
+                "order_id": "order-1001",
+                "amount": {
+                  "value": "25.99",
+                  "currency": "USD"
+                },
+                "created": "2026-10-20",
+                "state": "paid"
+              },
+              {
+                "order_id": "order-1002",
+                "amount": {
+                  "value": "10.99",
+                  "currency": "USD"
+                },
+                "created": "2026-10-21",
+                "state": "shipped"
+              }
+            ],
+            "pagination": {
+              "next_cursor": null
+            }
+          },
+          "shape": [
+            {
+              "path": "$",
+              "type": "object"
+            },
+            {
+              "path": "$.customer",
+              "type": "object"
+            },
+            {
+              "path": "$.customer.id",
+              "type": "str",
+              "example": "customer-123"
+            },
+            {
+              "path": "$.data",
+              "type": "array",
+              "length": 2
+            },
+            {
+              "path": "$.data[]",
+              "type": "object"
+            },
+            {
+              "path": "$.data[].amount",
+              "type": "object"
+            },
+            {
+              "path": "$.data[].amount.currency",
+              "type": "str",
+              "example": "USD"
+            },
+            {
+              "path": "$.data[].amount.value",
+              "type": "str",
+              "example": "25.99"
+            },
+            {
+              "path": "$.data[].created",
+              "type": "str",
+              "example": "2026-10-20"
+            },
+            {
+              "path": "$.data[].order_id",
+              "type": "str",
+              "example": "order-1001"
+            },
+            {
+              "path": "$.data[].state",
+              "type": "str",
+              "example": "paid"
+            },
+            {
+              "path": "$.pagination",
+              "type": "object"
+            },
+            {
+              "path": "$.pagination.next_cursor",
+              "type": "NoneType",
+              "example": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "experiment": "missing_customer",
+      "purpose": "Compare error status and error-body semantics.",
+      "legacy": {
+        "request": {
+          "method": "GET",
+          "url": "http://127.0.0.1:8000/v1/customers/missing-customer/orders?page_size=1",
+          "customer_id": "missing-customer",
+          "params": {
+            "page_size": 1
+          }
+        },
+        "response": {
+          "status_code": 404,
+          "body": {
+            "detail": {
+              "code": "CUSTOMER_NOT_FOUND",
+              "message": "Customer does not exist"
+            }
+          },
+          "shape": [
+            {
+              "path": "$",
+              "type": "object"
+            },
+            {
+              "path": "$.detail",
+              "type": "object"
+            },
+            {
+              "path": "$.detail.code",
+              "type": "str",
+              "example": "CUSTOMER_NOT_FOUND"
+            },
+            {
+              "path": "$.detail.message",
+              "type": "str",
+              "example": "Customer does not exist"
+            }
+          ]
+        }
+      },
+      "modern": {
+        "request": {
+          "method": "GET",
+          "url": "http://127.0.0.1:8000/v2/customers/missing-customer/orders?limit=1",
+          "customer_id": "missing-customer",
+          "params": {
+            "limit": 1
+          }
+        },
+        "response": {
+          "status_code": 200,
+          "body": {
+            "data": [],
+            "error": {
+              "type": "unknown_customer",
+              "customer": "missing-customer"
+            }
+          },
+          "shape": [
+            {
+              "path": "$",
+              "type": "object"
+            },
+            {
+              "path": "$.data",
+              "type": "array",
+              "length": 0
+            },
+            {
+              "path": "$.error",
+              "type": "object"
+            },
+            {
+              "path": "$.error.customer",
+              "type": "str",
+              "example": "missing-customer"
+            },
+            {
+              "path": "$.error.type",
+              "type": "str",
+              "example": "unknown_customer"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "compatibility_plan": {
+    "summary": "Migrate GET /v1/customers/{id}/orders?page_size to GET /v2/customers/{id}/orders?limit; nest customer_id into customer.id, orders into data, next_page into pagination.next_cursor; rename id->order_id and status->state; convert total_cents int to amount.value decimal string with USD currency; truncate created_at datetime to created date; translate 404 detail errors to 200 error-object with empty data.",
+    "changes": [
+      {
+        "category": "request_parameter_rename",
+        "legacy_path": "$.params.page_size",
+        "modern_path": "$.params.limit",
+        "transformation": "Rename query param page_size to limit; integer value passes through unchanged: limit = page_size",
+        "evidence": "one_existing_order: legacy params {page_size:1} vs modern params {limit:1}; two_existing_orders: {page_size:2} vs {limit:2} with same result counts",
+        "confidence": 1.0
+      },
+      {
+        "category": "response_nesting_change",
+        "legacy_path": "$.customer_id",
+        "modern_path": "$.customer.id",
+        "transformation": "Move string value into nested object: modern.customer = {id: legacy.customer_id}",
+        "evidence": "one_existing_order and two_existing_orders: legacy $.customer_id='customer-123' equals modern $.customer.id='customer-123'",
+        "confidence": 0.95
+      },
+      {
+        "category": "response_field_rename",
+        "legacy_path": "$.orders",
+        "modern_path": "$.data",
+        "transformation": "Rename top-level array $.orders to $.data; element order preserved, 1:1 element mapping",
+        "evidence": "one_existing_order length 1 and two_existing_orders length 2 preserve order and count when mapping $.orders to $.data",
+        "confidence": 0.95
+      },
+      {
+        "category": "response_field_rename",
+        "legacy_path": "$.orders[].id",
+        "modern_path": "$.data[].order_id",
+        "transformation": "Rename field id to order_id; string value identical: order_id = id",
+        "evidence": "order-1001 in one_existing_order and order-1001, order-1002 in two_existing_orders identical across $.orders[].id and $.data[].order_id",
+        "confidence": 1.0
+      },
+      {
+        "category": "response_field_rename",
+        "legacy_path": "$.orders[].status",
+        "modern_path": "$.data[].state",
+        "transformation": "Rename field status to state; observed values 'paid','shipped' pass through unchanged: state = status",
+        "evidence": "paid in one_existing_order; paid and shipped in two_existing_orders identical across $.orders[].status and $.data[].state",
+        "confidence": 0.95
+      },
+      {
+        "category": "value_transformation",
+        "legacy_path": "$.orders[].total_cents",
+        "modern_path": "$.data[].amount.value",
+        "transformation": "Convert integer cents to decimal string dollars nested under amount: amount.value = format(total_cents/100, '.2f') as string; amount.currency observed as 'USD' with no legacy equivalent; reverse: total_cents = int(round(float(amount.value)*100))",
+        "evidence": "2599 -> '25.99' and 1099 -> '10.99' with currency 'USD' in both one_existing_order and two_existing_orders",
+        "confidence": 0.95
+      },
+      {
+        "category": "value_transformation",
+        "legacy_path": "$.orders[].created_at",
+        "modern_path": "$.data[].created",
+        "transformation": "Truncate ISO8601 datetime to date: created = created_at[0:10] (YYYY-MM-DD); time component dropped, reverse requires midnight UTC reconstruction only if needed",
+        "evidence": "2026-10-20T14:30:00Z -> 2026-10-20 and 2026-10-21T09:15:00Z -> 2026-10-21 across experiments",
+        "confidence": 0.9
+      },
+      {
+        "category": "pagination_change",
+        "legacy_path": "$.next_page",
+        "modern_path": "$.pagination.next_cursor",
+        "transformation": "Move pagination token into nested object: pagination.next_cursor replaces next_page; both null when no further pages in observations; request pagination controlled by limit",
+        "evidence": "one_existing_order and two_existing_orders: legacy $.next_page=null corresponds to modern $.pagination.next_cursor=null; request uses page_size vs limit",
+        "confidence": 0.85
+      },
+      {
+        "category": "error_semantics_change",
+        "legacy_path": "$.status_code",
+        "modern_path": "$.status_code",
+        "transformation": "Missing customer changes from HTTP 404 to HTTP 200 with empty data; adapter must map modern 200 with $.error.type=='unknown_customer' to legacy 404",
+        "evidence": "missing_customer for missing-customer: legacy status_code 404 vs modern status_code 200",
+        "confidence": 0.95
+      },
+      {
+        "category": "error_semantics_change",
+        "legacy_path": "$.detail",
+        "modern_path": "$.error",
+        "transformation": "Map modern error {type:'unknown_customer',customer:<id>} to legacy detail {code:'CUSTOMER_NOT_FOUND',message:'Customer does not exist'}; modern error response has $.data=[] and omits $.customer and $.pagination; modern success has no $.error",
+        "evidence": "missing_customer: legacy $.detail={code:CUSTOMER_NOT_FOUND,message:Customer does not exist} vs modern $.error={type:unknown_customer,customer:missing-customer} with $.data=[]",
+        "confidence": 0.9
+      }
+    ],
+    "error_semantics": "Legacy signals missing customer with HTTP 404 and body $.detail.code=CUSTOMER_NOT_FOUND; modern signals same condition with HTTP 200, $.data=[] and $.error.type=unknown_customer with echoed customer id. Adapter must translate status and body in both directions and treat presence of $.error as error despite 200.",
+    "verification_strategy": [
+      "Replay page_size=1,2 as limit=1,2 and assert count, order, and id/state equality",
+      "Assert amount conversion: 2599->25.99 and 1099->10.99 and reverse int(round(float*100))",
+      "Assert date truncation: created_at[0:10]==created for both orders",
+      "Replay missing-customer and assert 404 detail vs 200 empty data+unknown_customer mapping both directions",
+      "Probe pagination with more pages to capture non-null next_cursor vs next_page format"
+    ],
+    "unresolved_risks": [
+      "Pagination token format when non-null unknown; only null next_page/next_cursor observed",
+      "Currency handling beyond USD unknown; no legacy currency field to confirm conversion",
+      "Status/state values beyond paid and shipped unobserved",
+      "Error mapping beyond CUSTOMER_NOT_FOUND/unknown_customer unobserved",
+      "Modern error response omits $.customer and $.pagination; handling of those fields on errors when present unknown",
+      "Time-zone and date-truncation round-trip lossy; time component cannot be restored from modern"
+    ]
+  }
+}
