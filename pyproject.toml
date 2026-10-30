@@ -1,7 +1,7 @@
 [project]
 name = "protocolsmith-meta-hackathon"
 version = "0.1.0"
-description = "Add your description here"
+description = "A Meta-powered black-box API migration agent that discovers, bridges, and verifies behavioral compatibility"
 authors = [
     { name = "Muhammad Rafae Khan", email = "mkhan48-debug@users.noreply.github.com" }
 ]
