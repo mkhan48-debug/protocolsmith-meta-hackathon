@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.scripts]
-protocolsmith-meta-hackathon = "protocolsmith_meta_hackathon:main"
+protocolsmith = "protocolsmith_meta_hackathon.demo:main"
 
 [build-system]
 requires = ["uv_build>=0.13.6,<0.14.0"]
