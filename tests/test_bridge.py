@@ -1,5 +1,6 @@
 import pytest
 
+import protocolsmith_meta_hackathon.dashboard_api as dashboard_api
 from protocolsmith_meta_hackathon.bridge_api import (
     AdapterError,
     adapt_item,
@@ -112,12 +113,13 @@ def proof_response(
     body: dict,
     status_code: int = 200,
     warning: str | None = None,
+    adapter: str | None = None,
 ) -> dict:
     return {
         "url": "http://example.test",
         "status_code": status_code,
         "body": body,
-        "adapter": None,
+        "adapter": adapter,
         "warning": warning,
     }
 
@@ -152,6 +154,7 @@ def test_live_proof_requires_full_contract_equivalence() -> None:
             "next_page": None,
         },
         warning="created_at reconstructed at midnight UTC",
+        adapter="generated-spec",
     )
     missing_body = {
         "detail": {
@@ -201,6 +204,7 @@ def test_live_proof_rejects_wrong_bridge_value() -> None:
             "next_page": None,
         },
         warning="created_at reconstructed at midnight UTC",
+        adapter="generated-spec",
     )
     missing_body = {
         "detail": {
@@ -223,4 +227,124 @@ def test_live_proof_rejects_wrong_bridge_value() -> None:
         and not check["passed"]
         for check in evaluation["checks"]
     )
+
+
+def test_live_proof_rejects_missing_adapter_identity() -> None:
+    legacy_body = {
+        "customer_id": "customer-123",
+        "orders": [
+            {
+                "id": "order-1001",
+                "total_cents": 2599,
+                "created_at": "2026-10-20T14:30:00Z",
+                "status": "paid",
+            }
+        ],
+        "next_page": None,
+    }
+    bridge_body = {
+        "customer_id": "customer-123",
+        "orders": [
+            {
+                "id": "order-1001",
+                "total_cents": 2599,
+                "created_at": "2026-10-20T00:00:00Z",
+                "status": "paid",
+            }
+        ],
+        "next_page": None,
+    }
+    missing_body = {
+        "detail": {
+            "code": "CUSTOMER_NOT_FOUND",
+            "message": "Customer does not exist",
+        }
+    }
+
+    evaluation = evaluate_live_proof(
+        proof_response(legacy_body),
+        proof_response({"data": [modern_order()]}),
+        proof_response(
+            bridge_body,
+            warning="created_at reconstructed at midnight UTC",
+        ),
+        proof_response(missing_body, status_code=404),
+        proof_response(missing_body, status_code=404),
+    )
+
+    assert evaluation["result"] == "failed"
+    assert any(
+        check["name"] == "bridge identifies generated adapter"
+        and not check["passed"]
+        for check in evaluation["checks"]
+    )
+
+
+def dashboard_artifact_reader(active_trace: dict):
+    def read_artifact(filename: str) -> dict:
+        if filename == "active_probe_trace.json":
+            return active_trace
+        if filename == "discovery_report.json":
+            return {
+                "model": "muse-spark-1.3",
+                "evidence": [],
+                "compatibility_plan": {"changes": []},
+            }
+        if filename == "adapter_spec.json":
+            return {"spec": {}}
+        if filename == "verification_receipt.json":
+            return {"summary": {}, "checks": []}
+        return {}
+
+    return read_artifact
+
+
+def test_old_active_artifact_is_not_called_causally_confirmed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    old_trace = {
+        "execution": {"deterministic_confirmation": True},
+        "final_verdict": {"accepted": True},
+    }
+    monkeypatch.setattr(
+        dashboard_api,
+        "read_artifact",
+        dashboard_artifact_reader(old_trace),
+    )
+
+    context = dashboard_api.build_dashboard_context()
+
+    assert context["active_accepted"] is True
+    assert context["active_case_total"] == 0
+    assert context["active_causally_confirmed"] is False
+
+
+def test_six_passing_controls_are_called_causally_confirmed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    controlled_trace = {
+        "execution": {
+            "deterministic_confirmation": True,
+            "cases": [
+                {"api": "legacy_v1", "role": role, "passed": True}
+                for role in ("baseline", "wrong_parameter", "correct_parameter")
+            ]
+            + [
+                {"api": "modern_v2", "role": role, "passed": True}
+                for role in ("baseline", "wrong_parameter", "correct_parameter")
+            ],
+        },
+        "final_verdict": {"accepted": True},
+    }
+    monkeypatch.setattr(
+        dashboard_api,
+        "read_artifact",
+        dashboard_artifact_reader(controlled_trace),
+    )
+
+    context = dashboard_api.build_dashboard_context()
+
+    assert context["active_case_passed"] == 6
+    assert context["active_case_total"] == 6
+    assert context["active_causally_confirmed"] is True
 

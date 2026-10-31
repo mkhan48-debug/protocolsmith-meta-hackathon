@@ -23,7 +23,8 @@ The following ProtocolSmith functionality was created during the official hackat
 8. Error-semantics and value-transformation handling
 9. Machine-readable verification receipt
 10. Automated unit and integration checks
-11. Muse-designed active experiment
+11. Muse-designed active experiment with baseline and swapped-name
+    negative controls
 12. GitHub Actions continuous integration
 13. Interactive evidence and live-proof dashboard
 14. Documentation, architecture, and safety boundaries
@@ -52,7 +53,7 @@ These dependencies are not claimed as original work. ProtocolSmith's orchestrati
 
 ## Meta technology used
 
-ProtocolSmith uses Muse Spark 1.3 through Meta Model API.
+ProtocolSmith uses Muse Spark 1.3 through the Meta Model API.
 
 Muse Spark:
 
@@ -78,9 +79,11 @@ The demo highlights only functionality created during the hackathon:
 2. The same client fails directly against API v2.
 3. ProtocolSmith discovers the incompatibilities.
 4. Muse designs an evidence-gathering experiment.
-5. ProtocolSmith compiles and executes a constrained bridge.
-6. The unchanged client succeeds through that bridge.
-7. Deterministic checks produce a verification receipt.
+5. ProtocolSmith runs a six-case causal-control matrix and accepts the
+   parameter mapping only when every deterministic outcome agrees.
+6. ProtocolSmith compiles and executes a constrained bridge.
+7. The unchanged client succeeds through that bridge.
+8. Fifteen deterministic checks produce a verification receipt.
 
 ## Known limitations
 

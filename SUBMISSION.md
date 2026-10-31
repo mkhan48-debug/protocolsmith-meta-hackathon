@@ -15,7 +15,7 @@ ProtocolSmith actively probes legacy and modern APIs, uses Meta Muse Spark to co
 
 ## Short summary
 
-ProtocolSmith is a black-box API migration agent that gathers differential evidence, uses Meta Muse Spark 1.3 to infer compatibility rules and design experiments, compiles an allowlisted adapter specification, executes a deterministic bridge, and produces a verification receipt proving that an unchanged legacy client works against a modern API.
+ProtocolSmith infers and verifies behavioral compatibility rules from paired black-box observations within a bounded migration surface. It uses Meta Muse Spark 1.3 to reason over evidence and design experiments, compiles an allowlisted adapter specification, executes a deterministic bridge, and produces a verification receipt proving that an unchanged legacy client works against a modern API.
 
 ## Project description
 
@@ -23,7 +23,7 @@ API migrations often break existing clients in ways documentation does not captu
 
 The prototype includes intentionally incompatible legacy and modern Orders APIs plus an unchanged legacy client. ProtocolSmith sends paired requests, records raw responses and structural shapes, and preserves those observations as evidence. Meta Muse Spark 1.3 analyzes the evidence through typed structured outputs, identifies supported compatibility changes, and designs a discriminating follow-up experiment. A second constrained Muse step compiles the findings into a declarative adapter specification containing only allowlisted operations.
 
-A deterministic runtime executes that specification as a compatibility bridge. The decisive demonstration shows the unchanged client succeeding against API v1, failing directly against API v2, and succeeding again through ProtocolSmith. Fourteen recorded contract checks verify fields, values, pagination, error semantics, and an explicit warning for lost timestamp information. ProtocolSmith never executes arbitrary model-generated source code and does not silently claim compatibility when the evidence cannot support it.
+A deterministic runtime executes that specification as a compatibility bridge. The decisive demonstration shows the unchanged client succeeding against API v1, failing directly against API v2, and succeeding again through ProtocolSmith. Fifteen recorded contract checks verify adapter identity, fields, values, pagination, error semantics, and an explicit warning for lost timestamp information. ProtocolSmith never executes arbitrary model-generated source code and does not silently claim compatibility when the evidence cannot support it.
 
 ## Impact
 
@@ -43,7 +43,7 @@ Pydantic constrains Muse outputs. ProtocolSmith then validates and executes them
 
 - Python 3.12 and FastAPI
 - Meta Model API with `muse-spark-1.3`
-- Pydantic structured model outputs
+- Pydantic-constrained structured outputs
 - Differential request and response evidence collection
 - Recursive response-shape descriptions
 - Constrained declarative adapter compiler
@@ -53,16 +53,19 @@ Pydantic constrains Muse outputs. ProtocolSmith then validates and executes them
 - Machine-readable discovery, probe, adapter, and verification artifacts
 - Interactive live-proof dashboard
 - One-command local launcher
-- Eleven automated tests and GitHub Actions CI
+- Automated unit and live HTTP end-to-end tests with GitHub Actions CI
 
 ## Demonstration sequence
 
 1. Show the hackathon new-work declaration.
 2. Explain the API migration problem and evidence-to-proof architecture.
-3. Show Muse's model-designed experiment and generated specification.
+3. Show Muse's model-designed six-case experiment, including its
+   baseline and swapped-name negative controls, followed by the generated
+   specification.
 4. Run the dashboard's live proof.
 5. Show v1 passing, direct v2 failing, and the generated bridge passing.
-6. Show the deterministic verification receipt and disclosed timestamp loss.
+6. Show the 15/15 deterministic verification receipt and disclosed
+   timestamp loss.
 
 ## Honest limitations
 
@@ -70,7 +73,7 @@ Pydantic constrains Muse outputs. ProtocolSmith then validates and executes them
 - It supports a deliberately small transformation allowlist.
 - The active probe causally supports one request-parameter mapping; it does not prove every inferred mapping independently.
 - The modern example discards time-of-day information. ProtocolSmith reconstructs midnight UTC and exposes the loss explicitly.
-- Remote targets require explicit opt-in, and production deployment would require stronger credential, redaction, isolation, and rate-limit policies.
+- Remote targets require explicit opt-in, and production deployment would require stronger credential, redaction, isolation, and rate-limiting policies.
 
 ## New-work declaration
 

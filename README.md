@@ -8,7 +8,7 @@ Built by **Muhammad Rafae Khan** for the **Meta Global AI Developer Hackathon 20
 
 - Track: Indie Developer
 - Theme: Push the Frontier
-- Meta technology: Muse Spark 1.3 through Meta Model API
+- Meta technology: Muse Spark 1.3 through the Meta Model API
 - Status: Working hackathon prototype
 
 ## The problem
@@ -71,12 +71,19 @@ HTTP 404 legacy error    ← HTTP 200 modern error object
 
 Muse Spark is part of the product runtime—not merely a coding assistant.
 
-Muse performs two constrained reasoning tasks:
+Muse performs three constrained reasoning tasks:
 
 1. **Compatibility discovery:** It analyzes paired black-box observations and produces a typed compatibility plan.
 2. **Safe adapter compilation:** It converts evidence-backed findings into a declarative specification containing only allowlisted operations.
+3. **Active experiment design and assessment:** It proposes a bounded
+   follow-up probe and assesses the resulting evidence.
 
-Muse also designs an active follow-up probe. The deterministic executor runs that experiment and accepts the conclusion only when observable evidence supports it.
+The deterministic executor runs that proposal as a six-case control
+matrix: each API is tested with no parameter, the other version's
+parameter, and its proposed parameter. A mapping is accepted only when
+both baselines and swapped-name negative controls behave as predicted,
+both correct names produce the predicted effect, and Muse's evidence
+assessment agrees.
 
 ProtocolSmith never executes arbitrary model-generated source code.
 
@@ -154,7 +161,7 @@ The dashboard opens automatically at `http://127.0.0.1:8001`. Press
 
 ### Manual start (optional)
 
-### Start the controlled API laboratory
+#### Start the controlled API laboratory
 
 ```bash
 uv run uvicorn protocolsmith_meta_hackathon.lab_api:app \
@@ -162,7 +169,7 @@ uv run uvicorn protocolsmith_meta_hackathon.lab_api:app \
   --port 8000
 ```
 
-### Start the dashboard and compatibility bridge
+#### Start the dashboard and compatibility bridge
 
 In another Terminal:
 
@@ -248,6 +255,10 @@ ProtocolSmith produces:
 
 These provide an auditable chain from raw observation to inferred rule, executable specification, and deterministic verification.
 
+The current verification receipt records **15/15 passing contract
+checks**, including explicit confirmation that the bridge response was
+produced by the generated adapter specification.
+
 ## Repository structure
 
 ```text
@@ -272,7 +283,9 @@ artifacts/
   verification_receipt.json
 
 tests/
-  test_bridge.py
+  test_bridge.py        Unit and live-proof evaluation tests
+  test_active_probe.py  Six-case causal-control tests
+  test_e2e.py           Real HTTP stack and unchanged-client proof
 ```
 
 ## Current limitations
@@ -281,6 +294,8 @@ This hackathon prototype intentionally uses a controlled Orders API laboratory.
 
 - It does not yet support arbitrary API authentication systems.
 - Endpoint discovery is scoped to a known route.
+- Candidate parameter names are selected from a bounded allowlist rather
+  than discovered across an arbitrary API surface.
 - The transformation-operation allowlist is intentionally small.
 - The modern example removes time-of-day information. ProtocolSmith reconstructs midnight UTC, reports the loss, and does not claim exact equivalence.
 - Remote probing requires explicit opt-in and should only target trusted APIs.

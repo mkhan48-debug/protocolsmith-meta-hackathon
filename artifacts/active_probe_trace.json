@@ -1,70 +1,231 @@
 {
-  "generated_at": "2026-10-30T07:05:55.448925+00:00",
+  "generated_at": "2026-10-31T02:40:30.802837+00:00",
   "model": "muse-spark-1.3",
   "mode": "active_model_designed_experiment",
   "proposal": {
-    "name": "page_size_to_limit_value_1_probe",
-    "hypothesis": "Legacy $.params.page_size renames to modern $.params.limit with direct integer passthrough (limit = page_size); querying customer-123 with value 1 on both APIs will return exactly 1 item if mapping holds.",
+    "name": "page_size_to_limit_probe",
+    "hypothesis": "Candidate hypothesis: legacy query param page_size maps to modern query param limit as limit = page_size, so page_size=1 on GET /v1/customers/{id}/orders should correspond to limit=1 on GET /v2/customers/{id}/orders, pending confirmation from controls where baseline and swapped names both return 2 items while correct name truncates to 1 item",
     "customer_id": "customer-123",
     "legacy_parameter": "page_size",
     "modern_parameter": "limit",
     "value": 1,
-    "information_gain": "Customer-123 has exactly two records, so value 1 is discriminating: a correctly mapped limit truncates to 1 item while an ignored/misnamed param falls back to default 2 items. Prior value-2 observation is non-discriminating because both correct and ignored params yield 2 items. This paired value-1 test therefore tests the rename causally rather than merely repeating default behavior."
+    "information_gain": "With exactly two records for customer-123, value 1 is discriminating: a honored param truncates to 1 item while an ignored param leaves default 2 items. Prior evidence only correlated page_size:1 with limit:1 and page_size:2 with limit:2 without cross-controls, so it cannot rule out that either API ignores params or honors both names. Testing baseline no-param, correct name, and swapped name on each API isolates the rename: confirmation requires baseline=2 and swapped=2 vs correct=1 on both APIs, proving the effect is param-specific rather than merely repeating the prior correlated observation."
   },
   "execution": {
-    "legacy": {
-      "url": "http://127.0.0.1:8000/v1/customers/customer-123/orders?page_size=1",
-      "parameter": "page_size",
-      "value": 1,
-      "status_code": 200,
-      "item_count": 1,
-      "body": {
-        "customer_id": "customer-123",
-        "orders": [
-          {
-            "id": "order-1001",
-            "total_cents": 2599,
-            "created_at": "2026-10-20T14:30:00Z",
-            "status": "paid"
-          }
-        ],
-        "next_page": null
-      }
-    },
-    "modern": {
-      "url": "http://127.0.0.1:8000/v2/customers/customer-123/orders?limit=1",
-      "parameter": "limit",
-      "value": 1,
-      "status_code": 200,
-      "item_count": 1,
-      "body": {
-        "customer": {
-          "id": "customer-123"
-        },
-        "data": [
-          {
-            "order_id": "order-1001",
-            "amount": {
-              "value": "25.99",
-              "currency": "USD"
+    "protocol": "six_case_cross_parameter_control_v1",
+    "cases": [
+      {
+        "api": "legacy_v1",
+        "role": "baseline",
+        "url": "http://127.0.0.1:8000/v1/customers/customer-123/orders",
+        "parameter": null,
+        "value": null,
+        "status_code": 200,
+        "item_count": 2,
+        "body": {
+          "customer_id": "customer-123",
+          "orders": [
+            {
+              "id": "order-1001",
+              "total_cents": 2599,
+              "created_at": "2026-10-20T14:30:00Z",
+              "status": "paid"
             },
-            "created": "2026-10-20",
-            "state": "paid"
+            {
+              "id": "order-1002",
+              "total_cents": 1099,
+              "created_at": "2026-10-21T09:15:00Z",
+              "status": "shipped"
+            }
+          ],
+          "next_page": null
+        },
+        "expected_item_count": 2,
+        "passed": true
+      },
+      {
+        "api": "legacy_v1",
+        "role": "wrong_parameter",
+        "url": "http://127.0.0.1:8000/v1/customers/customer-123/orders?limit=1",
+        "parameter": "limit",
+        "value": 1,
+        "status_code": 200,
+        "item_count": 2,
+        "body": {
+          "customer_id": "customer-123",
+          "orders": [
+            {
+              "id": "order-1001",
+              "total_cents": 2599,
+              "created_at": "2026-10-20T14:30:00Z",
+              "status": "paid"
+            },
+            {
+              "id": "order-1002",
+              "total_cents": 1099,
+              "created_at": "2026-10-21T09:15:00Z",
+              "status": "shipped"
+            }
+          ],
+          "next_page": null
+        },
+        "expected_item_count": 2,
+        "passed": true
+      },
+      {
+        "api": "legacy_v1",
+        "role": "correct_parameter",
+        "url": "http://127.0.0.1:8000/v1/customers/customer-123/orders?page_size=1",
+        "parameter": "page_size",
+        "value": 1,
+        "status_code": 200,
+        "item_count": 1,
+        "body": {
+          "customer_id": "customer-123",
+          "orders": [
+            {
+              "id": "order-1001",
+              "total_cents": 2599,
+              "created_at": "2026-10-20T14:30:00Z",
+              "status": "paid"
+            }
+          ],
+          "next_page": null
+        },
+        "expected_item_count": 1,
+        "passed": true
+      },
+      {
+        "api": "modern_v2",
+        "role": "baseline",
+        "url": "http://127.0.0.1:8000/v2/customers/customer-123/orders",
+        "parameter": null,
+        "value": null,
+        "status_code": 200,
+        "item_count": 2,
+        "body": {
+          "customer": {
+            "id": "customer-123"
+          },
+          "data": [
+            {
+              "order_id": "order-1001",
+              "amount": {
+                "value": "25.99",
+                "currency": "USD"
+              },
+              "created": "2026-10-20",
+              "state": "paid"
+            },
+            {
+              "order_id": "order-1002",
+              "amount": {
+                "value": "10.99",
+                "currency": "USD"
+              },
+              "created": "2026-10-21",
+              "state": "shipped"
+            }
+          ],
+          "pagination": {
+            "next_cursor": null
           }
-        ],
-        "pagination": {
-          "next_cursor": null
-        }
+        },
+        "expected_item_count": 2,
+        "passed": true
+      },
+      {
+        "api": "modern_v2",
+        "role": "wrong_parameter",
+        "url": "http://127.0.0.1:8000/v2/customers/customer-123/orders?page_size=1",
+        "parameter": "page_size",
+        "value": 1,
+        "status_code": 200,
+        "item_count": 2,
+        "body": {
+          "customer": {
+            "id": "customer-123"
+          },
+          "data": [
+            {
+              "order_id": "order-1001",
+              "amount": {
+                "value": "25.99",
+                "currency": "USD"
+              },
+              "created": "2026-10-20",
+              "state": "paid"
+            },
+            {
+              "order_id": "order-1002",
+              "amount": {
+                "value": "10.99",
+                "currency": "USD"
+              },
+              "created": "2026-10-21",
+              "state": "shipped"
+            }
+          ],
+          "pagination": {
+            "next_cursor": null
+          }
+        },
+        "expected_item_count": 2,
+        "passed": true
+      },
+      {
+        "api": "modern_v2",
+        "role": "correct_parameter",
+        "url": "http://127.0.0.1:8000/v2/customers/customer-123/orders?limit=1",
+        "parameter": "limit",
+        "value": 1,
+        "status_code": 200,
+        "item_count": 1,
+        "body": {
+          "customer": {
+            "id": "customer-123"
+          },
+          "data": [
+            {
+              "order_id": "order-1001",
+              "amount": {
+                "value": "25.99",
+                "currency": "USD"
+              },
+              "created": "2026-10-20",
+              "state": "paid"
+            }
+          ],
+          "pagination": {
+            "next_cursor": null
+          }
+        },
+        "expected_item_count": 1,
+        "passed": true
       }
-    },
+    ],
+    "checks": [
+      {
+        "name": "parameter names are version-specific",
+        "passed": true
+      },
+      {
+        "name": "all six requests returned HTTP 200",
+        "passed": true
+      },
+      {
+        "name": "all six controlled counts matched",
+        "passed": true
+      }
+    ],
     "deterministic_confirmation": true
   },
   "assessment": {
     "hypothesis_supported": true,
-    "finding": "Both APIs returned 200 with item_count 1 when value 1 applied: legacy /v1/customers/customer-123/orders?page_size=1 returned 1 item and modern /v2/customers/customer-123/orders?limit=1 returned 1 item, matching predicted truncation from 2-item dataset to 1 item",
-    "discovered_mapping": "$.params.page_size -> $.params.limit (limit = page_size)",
-    "confidence": 0.85,
-    "recommended_next_probe": "Query both endpoints with no pagination params to confirm 2-item default baseline, then cross-test limit=1 on v1 and page_size=1 on v2 to verify names are version-specific and ignored when swapped"
+    "finding": "All six cases returned HTTP 200: both baselines returned 2 items, legacy page_size=1 truncated to 1 while legacy limit=1 stayed at 2, modern limit=1 truncated to 1 while modern page_size=1 stayed at 2. Version-specific behavior confirms page_size (v1) corresponds to limit (v2).",
+    "discovered_mapping": "GET /v1/customers/{id}/orders?page_size=N maps to GET /v2/customers/{id}/orders?limit=N (verified with N=1)",
+    "confidence": 0.95,
+    "recommended_next_probe": "Probe the next pagination control equivalence (e.g., legacy page or page_token vs modern cursor/after) to verify continuation beyond first-page truncation preserves the same single-item subset and ordering."
   },
   "final_verdict": {
     "deterministically_confirmed": true,

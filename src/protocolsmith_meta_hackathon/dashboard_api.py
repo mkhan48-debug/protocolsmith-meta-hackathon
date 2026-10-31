@@ -60,9 +60,38 @@ def build_dashboard_context() -> dict[str, Any]:
 
     verification_summary = verification.get("summary", {})
     adapter_spec = adapter.get("spec", {})
+    active_execution = active_trace.get("execution", {})
+    raw_active_cases = active_execution.get("cases", [])
+    active_cases = (
+        raw_active_cases
+        if isinstance(raw_active_cases, list)
+        else []
+    )
+    active_case_passed = sum(
+        1
+        for case in active_cases
+        if isinstance(case, dict) and case.get("passed") is True
+    )
+    active_accepted = active_trace.get(
+        "final_verdict",
+        {},
+    ).get("accepted", False)
+    active_causally_confirmed = (
+        active_accepted is True
+        and active_execution.get("deterministic_confirmation") is True
+        and len(active_cases) == 6
+        and active_case_passed == len(active_cases)
+    )
+    model_identifier = discovery.get("model", "muse-spark-1.3")
+    model_display_name = (
+        "Muse Spark 1.3"
+        if model_identifier == "muse-spark-1.3"
+        else model_identifier
+    )
 
     return {
-        "model": discovery.get("model", "muse-spark-1.3"),
+        "model": model_identifier,
+        "model_display_name": model_display_name,
         "summary": compatibility_plan.get("summary", ""),
         "experiment_count": len(discovery.get("evidence", [])),
         "change_count": len(changes),
@@ -80,10 +109,11 @@ def build_dashboard_context() -> dict[str, Any]:
         "known_loss": verification.get("known_loss", {}),
         "active_proposal": active_trace.get("proposal", {}),
         "active_assessment": active_trace.get("assessment", {}),
-        "active_accepted": active_trace.get(
-            "final_verdict",
-            {},
-        ).get("accepted", False),
+        "active_accepted": active_accepted,
+        "active_causally_confirmed": active_causally_confirmed,
+        "active_cases": active_cases,
+        "active_case_passed": active_case_passed,
+        "active_case_total": len(active_cases),
         "query_rules": adapter_spec.get("query_rules", []),
         "item_rules": adapter_spec.get("item_field_rules", []),
     }
@@ -153,6 +183,9 @@ def evaluate_live_proof(
             and "orders" not in modern_body
         ),
         "bridge restores success status": bridge["status_code"] == 200,
+        "bridge identifies generated adapter": (
+            bridge.get("adapter") == "generated-spec"
+        ),
         "bridge restores customer identifier": (
             isinstance(legacy_body, dict)
             and isinstance(bridge_body, dict)

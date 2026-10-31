@@ -57,6 +57,13 @@
       font: inherit;
     }
 
+    button:focus-visible,
+    a:focus-visible,
+    summary:focus-visible {
+      outline: 3px solid var(--yellow);
+      outline-offset: 3px;
+    }
+
     .shell {
       width: min(1180px, calc(100% - 32px));
       margin: 0 auto;
@@ -313,6 +320,57 @@
       font-size: 12px;
     }
 
+    .pending {
+      display: inline-flex;
+      margin-top: 20px;
+      border: 1px solid var(--yellow);
+      border-radius: 999px;
+      padding: 7px 11px;
+      color: var(--yellow);
+      background: rgba(246, 207, 112, 0.08);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .experiment-evidence {
+      margin-top: 14px;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+
+    .experiment-evidence table {
+      min-width: 760px;
+    }
+
+    .result-pill {
+      display: inline-flex;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-family: var(--mono);
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    .result-pill.pass {
+      color: var(--green);
+      background: var(--green-dark);
+    }
+
+    .result-pill.fail {
+      color: var(--red);
+      background: var(--red-dark);
+    }
+
+    .experiment-pending {
+      margin-top: 14px;
+      border-left: 3px solid var(--yellow);
+      padding: 16px 18px;
+      color: var(--muted);
+      background: rgba(246, 207, 112, 0.06);
+      line-height: 1.55;
+    }
+
     .mapping-table {
       overflow: hidden;
       border: 1px solid var(--border);
@@ -433,8 +491,22 @@
     }
 
     .verdict.expected-failure {
+      color: var(--yellow);
+      background: rgba(246, 207, 112, 0.12);
+    }
+
+    .verdict.fail,
+    .verdict.unexpected {
       color: var(--red);
       background: var(--red-dark);
+    }
+
+    .proof-card-note {
+      min-height: 42px;
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
     }
 
     pre {
@@ -453,6 +525,35 @@
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
+    }
+
+    .live-checks {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .live-checks[hidden] {
+      display: none;
+    }
+
+    .live-check {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 12px;
+      color: var(--muted);
+      background: #081310;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .live-check.pass {
+      color: var(--green);
+    }
+
+    .live-check.fail {
+      color: var(--red);
     }
 
     .check {
@@ -518,7 +619,8 @@
       .metrics,
       .pipeline,
       .proof-grid,
-      .checks {
+      .checks,
+      .live-checks {
         grid-template-columns: 1fr;
       }
 
@@ -528,10 +630,10 @@
         flex-direction: column;
       }
 
-      th:nth-child(1),
-      td:nth-child(1),
-      th:nth-child(5),
-      td:nth-child(5) {
+      .mapping-table th:nth-child(1),
+      .mapping-table td:nth-child(1),
+      .mapping-table th:nth-child(5),
+      .mapping-table td:nth-child(5) {
         display: none;
       }
     }
@@ -548,7 +650,7 @@
 
       <div class="nav-meta">
         <span class="status-dot"></span>
-        Meta {{ model }} · evidence loaded
+        Meta {{ model_display_name }} · evidence loaded
       </div>
     </nav>
 
@@ -568,11 +670,20 @@
         </p>
 
         <div class="hero-actions">
-          <button class="primary-button" id="run-proof">
+          <button
+            class="primary-button"
+            id="run-proof"
+            type="button"
+          >
             Run live compatibility proof
           </button>
 
-          <a class="secondary-link" href="/spec" target="_blank">
+          <a
+            class="secondary-link"
+            href="/spec"
+            target="_blank"
+            rel="noopener"
+          >
             Inspect generated specification
           </a>
         </div>
@@ -633,7 +744,7 @@
             <h3>Muse forms hypotheses</h3>
             <p>
               Infer field mappings, transformations, and semantic
-              changes using structured output.
+              changes using structured outputs.
             </p>
           </article>
 
@@ -659,18 +770,30 @@
 
       <section>
         <div class="section-heading">
-          <h2>Muse designs the next experiment.</h2>
+          <h2>Muse tests a causal compatibility hypothesis.</h2>
           <p class="section-description">
-            The model does more than summarize responses: it chooses
-            a discriminating probe, the runtime executes it, and the
-            result is accepted only when deterministic evidence agrees.
+            Muse proposed a bounded hypothesis. ProtocolSmith executed
+            baselines, correct-parameter requests, and swapped-name
+            negative controls. The mapping is accepted only when all
+            six deterministic outcomes agree.
           </p>
         </div>
 
         <div class="experiment">
           <article class="panel">
             <div class="panel-label">Model-designed proposal</div>
-            <h3>{{ active_proposal.get("name", "Active probe") }}</h3>
+            <h3>
+              Does
+              <code>{{ active_proposal.get(
+                "legacy_parameter",
+                "page_size"
+              ) }}</code>
+              map to
+              <code>{{ active_proposal.get(
+                "modern_parameter",
+                "limit"
+              ) }}</code>?
+            </h3>
             <p>
               {{ active_proposal.get(
                 "hypothesis",
@@ -678,29 +801,104 @@
               ) }}
             </p>
 
-            {% if active_accepted %}
+            {% if active_causally_confirmed %}
               <span class="accepted">
-                Deterministically confirmed
+                Causally confirmed ·
+                {{ active_case_passed }}/{{ active_case_total }}
+                controls passed
+              </span>
+            {% else %}
+              <span class="pending">
+                Awaiting full negative controls
               </span>
             {% endif %}
           </article>
 
           <article class="panel">
-            <div class="panel-label">Observed finding</div>
-            <h3>
-              {{ active_assessment.get(
-                "discovered_mapping",
-                "Awaiting evidence"
-              ) }}
-            </h3>
-            <p>
-              {{ active_assessment.get(
-                "finding",
-                "Run the active discovery script to generate evidence."
-              ) }}
-            </p>
+            <div class="panel-label">Controlled finding</div>
+            {% if active_causally_confirmed %}
+              <h3>Version-specific parameter mapping confirmed</h3>
+              <p>
+                The candidate mapping was tested with positive and
+                negative controls. Each API returned two items at
+                baseline, ignored the other version’s parameter name,
+                and returned one item only when given its proposed
+                version-specific parameter.
+              </p>
+            {% else %}
+              <h3>Paired observations support a candidate mapping</h3>
+              <p>
+                Baseline and swapped-name negative controls must be
+                recorded before ProtocolSmith calls this mapping causally
+                confirmed.
+              </p>
+            {% endif %}
           </article>
         </div>
+
+        {% if active_cases %}
+          <div class="experiment-evidence">
+            <table>
+              <thead>
+                <tr>
+                  <th>API</th>
+                  <th>Test</th>
+                  <th>Parameter</th>
+                  <th>Observed</th>
+                  <th>Expected</th>
+                  <th>Result</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for case in active_cases %}
+                  <tr>
+                    <td>
+                      {% if case.get("api") == "legacy_v1" %}
+                        Legacy v1
+                      {% elif case.get("api") == "modern_v2" %}
+                        Modern v2
+                      {% else %}
+                        {{ case.get("api", "Unknown") }}
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if case.get("role") == "baseline" %}
+                        Baseline
+                      {% elif case.get("role") == "wrong_parameter" %}
+                        Wrong name
+                      {% elif case.get("role") == "correct_parameter" %}
+                        Correct name
+                      {% else %}
+                        {{ case.get("role", "unknown").replace("_", " ") }}
+                      {% endif %}
+                    </td>
+                    <td>
+                      {% if case.get("parameter") %}
+                        <code>
+                          {{ case.get("parameter") }}={{ case.get("value") }}
+                        </code>
+                      {% else %}
+                        <span class="metric-note">none</span>
+                      {% endif %}
+                    </td>
+                    <td>{{ case.get("item_count", "—") }}</td>
+                    <td>{{ case.get("expected_item_count", "—") }}</td>
+                    <td>
+                      <span class="result-pill {% if case.get('passed') %}pass{% else %}fail{% endif %}">
+                        {% if case.get("passed") %}pass{% else %}fail{% endif %}
+                      </span>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="experiment-pending">
+            The saved artifact predates the six-case controlled
+            experiment. Regenerate it before recording the final demo.
+          </div>
+        {% endif %}
       </section>
 
       <section>
@@ -756,8 +954,11 @@
         <div class="section-heading">
           <h2>The decisive live proof.</h2>
           <p class="section-description">
-            The same unchanged client contract succeeds on v1, fails
-            directly on v2, and succeeds through the generated bridge.
+            The unchanged legacy contract succeeds against API v1,
+            fails as expected when sent directly to API v2, and succeeds
+            again through the generated bridge. This button performs a
+            live deterministic replay using a previously generated and
+            validated Muse specification; it does not call Muse again.
           </p>
         </div>
 
@@ -765,12 +966,22 @@
           <div class="proof-header">
             <div>
               <strong>Live execution</strong>
-              <div class="proof-status" id="proof-status">
+              <div
+                class="proof-status"
+                id="proof-status"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+              >
                 Ready to run
               </div>
             </div>
 
-            <button class="primary-button" id="run-proof-secondary">
+            <button
+              class="primary-button"
+              id="run-proof-secondary"
+              type="button"
+            >
               Execute now
             </button>
           </div>
@@ -781,7 +992,14 @@
               <span class="verdict" id="legacy-verdict">
                 waiting
               </span>
-              <pre id="legacy-output">No run yet.</pre>
+              <p class="proof-card-note">
+                Expected result: the unchanged client works against its
+                original contract.
+              </p>
+              <pre
+                id="legacy-output"
+                aria-label="Legacy API response"
+              >No run yet.</pre>
             </article>
 
             <article class="proof-card">
@@ -789,7 +1007,14 @@
               <span class="verdict" id="modern-verdict">
                 waiting
               </span>
-              <pre id="modern-output">No run yet.</pre>
+              <p class="proof-card-note">
+                Expected result: the unchanged legacy client cannot
+                interpret the v2 response without ProtocolSmith.
+              </p>
+              <pre
+                id="modern-output"
+                aria-label="Direct modern API response"
+              >No run yet.</pre>
             </article>
 
             <article class="proof-card">
@@ -797,9 +1022,23 @@
               <span class="verdict" id="bridge-verdict">
                 waiting
               </span>
-              <pre id="bridge-output">No run yet.</pre>
+              <p class="proof-card-note">
+                Expected result: the generated specification restores the
+                legacy contract.
+              </p>
+              <pre
+                id="bridge-output"
+                aria-label="ProtocolSmith bridge response"
+              >No run yet.</pre>
             </article>
           </div>
+
+          <div
+            class="live-checks"
+            id="live-checks"
+            aria-label="Live contract checks"
+            hidden
+          ></div>
         </div>
       </section>
 
@@ -870,18 +1109,43 @@
       const verdict = document.getElementById(`${prefix}-verdict`);
       const output = document.getElementById(`${prefix}-output`);
 
-      verdict.textContent = step.verdict;
+      verdict.textContent = step.verdict === "expected-failure"
+        ? "expected incompatibility"
+        : step.verdict;
       verdict.className = `verdict ${step.verdict}`;
       output.textContent = JSON.stringify(step, null, 2);
     }
 
+    function showChecks(checks) {
+      const container = document.getElementById("live-checks");
+      container.replaceChildren();
+
+      checks.forEach((check) => {
+        const item = document.createElement("div");
+        item.className = `live-check ${
+          check.passed ? "pass" : "fail"
+        }`;
+        item.textContent = `${
+          check.passed ? "✓" : "×"
+        } ${check.name}`;
+        container.appendChild(item);
+      });
+
+      container.hidden = false;
+    }
+
     async function runProof() {
+      const liveChecks = document.getElementById("live-checks");
+      liveChecks.replaceChildren();
+      liveChecks.hidden = true;
+
       buttons.forEach((button) => {
         button.disabled = true;
         button.textContent = "Running live proof…";
       });
 
-      proofStatus.textContent = "Executing three live requests…";
+      proofStatus.textContent =
+        "Executing five live contract requests across three visible paths…";
       proofStatus.className = "proof-status";
 
       document.getElementById("live").scrollIntoView({
@@ -899,6 +1163,7 @@
         showStep("legacy", data.steps.legacy_v1);
         showStep("modern", data.steps.modern_v2_direct);
         showStep("bridge", data.steps.protocolsmith_bridge);
+        showChecks(data.checks || []);
 
         if (data.result === "passed") {
           proofStatus.textContent =

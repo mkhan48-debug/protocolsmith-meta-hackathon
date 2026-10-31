@@ -1,14 +1,29 @@
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import httpx
 
-LEGACY_BASE_URL = "http://127.0.0.1:8000/v1"
-MODERN_BASE_URL = "http://127.0.0.1:8000/v2"
-BRIDGE_BASE_URL = "http://127.0.0.1:8001"
-RECEIPT_PATH = Path("artifacts/verification_receipt.json")
+LEGACY_BASE_URL = os.getenv(
+    "PROTOCOLSMITH_LEGACY_BASE_URL",
+    "http://127.0.0.1:8000/v1",
+).rstrip("/")
+MODERN_BASE_URL = os.getenv(
+    "PROTOCOLSMITH_MODERN_BASE_URL",
+    "http://127.0.0.1:8000/v2",
+).rstrip("/")
+BRIDGE_BASE_URL = os.getenv(
+    "PROTOCOLSMITH_BRIDGE_URL",
+    "http://127.0.0.1:8001",
+).rstrip("/")
+RECEIPT_PATH = Path(
+    os.getenv(
+        "PROTOCOLSMITH_RECEIPT_PATH",
+        "artifacts/verification_receipt.json",
+    )
+)
 
 
 def fetch(
@@ -31,6 +46,9 @@ def fetch(
         "url": str(response.request.url),
         "status_code": response.status_code,
         "body": body,
+        "adapter": response.headers.get(
+            "x-protocolsmith-adapter"
+        ),
         "adapter_warning": response.headers.get(
             "x-protocolsmith-warning"
         ),
@@ -120,6 +138,12 @@ def main() -> None:
             f"legacy={legacy_one['status_code']}, "
             f"bridge={bridge_one['status_code']}"
         ),
+    )
+    add_check(
+        checks,
+        "generated adapter identity disclosed",
+        bridge_one["adapter"] == "generated-spec",
+        f"adapter={bridge_one['adapter']!r}",
     )
 
     legacy_body = legacy_one["body"]
@@ -284,6 +308,7 @@ def main() -> None:
         },
     }
 
+    RECEIPT_PATH.parent.mkdir(parents=True, exist_ok=True)
     RECEIPT_PATH.write_text(
         json.dumps(receipt, indent=2),
         encoding="utf-8",

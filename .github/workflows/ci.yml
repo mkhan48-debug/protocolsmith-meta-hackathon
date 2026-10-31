@@ -28,8 +28,11 @@ jobs:
         run: uv sync --locked --all-groups
 
       - name: Compile Python files
-        run: uv run python -m compileall -q src scripts
+        run: uv run python -m compileall -q src scripts tests
 
-      - name: Run test suite
-        run: uv run pytest -q
+      - name: Run unit tests
+        run: uv run pytest -q --ignore=tests/test_e2e.py
+
+      - name: Run live HTTP end-to-end proof
+        run: uv run pytest -q tests/test_e2e.py
 

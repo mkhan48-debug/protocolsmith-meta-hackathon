@@ -1,9 +1,9 @@
 {
-  "generated_at": "2026-10-30T07:02:49.498294+00:00",
+  "generated_at": "2026-10-31T02:40:39.171881+00:00",
   "result": "passed",
   "summary": {
-    "checks_total": 14,
-    "checks_passed": 14,
+    "checks_total": 15,
+    "checks_passed": 15,
     "checks_failed": 0
   },
   "targets": {
@@ -26,6 +26,11 @@
       "name": "bridge returns legacy success status",
       "passed": true,
       "evidence": "legacy=200, bridge=200"
+    },
+    {
+      "name": "generated adapter identity disclosed",
+      "passed": true,
+      "evidence": "adapter='generated-spec'"
     },
     {
       "name": "root customer identifier preserved",
@@ -103,6 +108,7 @@
         ],
         "next_page": null
       },
+      "adapter": null,
       "adapter_warning": null
     },
     "modern_direct": {
@@ -136,6 +142,7 @@
           "next_cursor": null
         }
       },
+      "adapter": null,
       "adapter_warning": null
     },
     "bridge_one": {
@@ -153,6 +160,7 @@
         ],
         "next_page": null
       },
+      "adapter": "generated-spec",
       "adapter_warning": "created_at reconstructed at midnight UTC because the modern API discarded the original time"
     },
     "legacy_two": {
@@ -176,6 +184,7 @@
         ],
         "next_page": null
       },
+      "adapter": null,
       "adapter_warning": null
     },
     "bridge_two": {
@@ -199,6 +208,7 @@
         ],
         "next_page": null
       },
+      "adapter": "generated-spec",
       "adapter_warning": "created_at reconstructed at midnight UTC because the modern API discarded the original time"
     },
     "legacy_missing": {
@@ -210,6 +220,7 @@
           "message": "Customer does not exist"
         }
       },
+      "adapter": null,
       "adapter_warning": null
     },
     "bridge_missing": {
@@ -221,6 +232,7 @@
           "message": "Customer does not exist"
         }
       },
+      "adapter": "generated-spec",
       "adapter_warning": null
     }
   }
