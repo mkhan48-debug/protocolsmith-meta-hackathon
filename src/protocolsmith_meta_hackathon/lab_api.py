@@ -92,4 +92,3 @@ def modern_orders(
 
 app.mount("/v1", legacy_api)
 app.mount("/v2", modern_api)
-

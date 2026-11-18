@@ -1,6 +1,6 @@
 import pytest
 
-import protocolsmith_meta_hackathon.dashboard_api as dashboard_api
+from protocolsmith_meta_hackathon import dashboard_api
 from protocolsmith_meta_hackathon.bridge_api import (
     AdapterError,
     adapt_item,
@@ -223,8 +223,7 @@ def test_live_proof_rejects_wrong_bridge_value() -> None:
 
     assert evaluation["result"] == "failed"
     assert any(
-        check["name"] == "bridge preserves monetary value"
-        and not check["passed"]
+        check["name"] == "bridge preserves monetary value" and not check["passed"]
         for check in evaluation["checks"]
     )
 
@@ -274,8 +273,7 @@ def test_live_proof_rejects_missing_adapter_identity() -> None:
 
     assert evaluation["result"] == "failed"
     assert any(
-        check["name"] == "bridge identifies generated adapter"
-        and not check["passed"]
+        check["name"] == "bridge identifies generated adapter" and not check["passed"]
         for check in evaluation["checks"]
     )
 
@@ -347,4 +345,3 @@ def test_six_passing_controls_are_called_causally_confirmed(
     assert context["active_case_passed"] == 6
     assert context["active_case_total"] == 6
     assert context["active_causally_confirmed"] is True
-

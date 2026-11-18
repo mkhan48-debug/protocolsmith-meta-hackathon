@@ -27,8 +27,19 @@ jobs:
       - name: Install Python and dependencies
         run: uv sync --locked --all-groups
 
+      - name: Lint Python files
+        run: uv run ruff check src scripts tests
+
+      - name: Check Python formatting
+        run: uv run ruff format --check src scripts tests
+
       - name: Compile Python files
         run: uv run python -m compileall -q src scripts tests
+
+      - name: Verify generated showcase is current
+        run: |
+          uv run python scripts/build_static_showcase.py
+          git diff --exit-code -- docs
 
       - name: Run unit tests
         run: uv run pytest -q --ignore=tests/test_e2e.py

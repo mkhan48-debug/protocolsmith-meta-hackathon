@@ -1,0 +1,1864 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+  <meta
+    name="description"
+    content="ProtocolSmith controlled benchmark: discover, compile, and verify constrained REST API compatibility rules."
+  >
+  <meta property="og:title" content="ProtocolSmith — API Archaeology">
+  <meta
+    property="og:description"
+    content="An evidence-driven prototype for discovering, compiling, and verifying constrained API compatibility rules."
+  >
+  <meta property="og:type" content="website">
+  
+    <link
+      rel="canonical"
+      href="https://mkhan48-debug.github.io/protocolsmith-meta-hackathon/"
+    >
+    <meta
+      property="og:url"
+      content="https://mkhan48-debug.github.io/protocolsmith-meta-hackathon/"
+    >
+    <meta
+      property="og:image"
+      content="https://mkhan48-debug.github.io/protocolsmith-meta-hackathon/assets/protocolsmith-hero.jpg"
+    >
+    <meta
+      property="og:image:alt"
+      content="ProtocolSmith controlled API-compatibility benchmark dashboard"
+    >
+    <meta name="twitter:card" content="summary_large_image">
+  
+  <meta name="color-scheme" content="dark">
+  <link
+    rel="icon"
+    type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2307100f'/%3E%3Crect x='5' y='5' width='54' height='54' rx='11' fill='none' stroke='%2358e6a9' stroke-width='3'/%3E%3Ctext x='32' y='40' text-anchor='middle' font-family='monospace' font-size='24' font-weight='700' fill='%2358e6a9'%3EPS%3C/text%3E%3C/svg%3E"
+  >
+  <title>ProtocolSmith — API Archaeology Console</title>
+
+  <style>
+    :root {
+      --background: #07100f;
+      --surface: #0d1917;
+      --surface-light: #13231f;
+      --border: #29403a;
+      --text: #f4f7f5;
+      --muted: #9fb1ac;
+      --green: #58e6a9;
+      --green-dark: #173d31;
+      --red: #ff7d73;
+      --red-dark: #41201f;
+      --yellow: #f6cf70;
+      --blue: #77bdfb;
+      --mono: "SFMono-Regular", Consolas, monospace;
+      --sans: Inter, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+      }
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(
+          circle at 10% 0%,
+          rgba(88, 230, 169, 0.12),
+          transparent 32rem
+        ),
+        var(--background);
+      font-family: var(--sans);
+    }
+
+    a {
+      color: inherit;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    button:focus-visible,
+    a:focus-visible,
+    summary:focus-visible {
+      outline: 3px solid var(--yellow);
+      outline-offset: 3px;
+    }
+
+    .skip-link {
+      position: fixed;
+      z-index: 100;
+      top: 12px;
+      left: 12px;
+      transform: translateY(-180%);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: #03110c;
+      background: var(--yellow);
+      font-weight: 750;
+      text-decoration: none;
+    }
+
+    .skip-link:focus {
+      transform: translateY(0);
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .navigation {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 72px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 760;
+      letter-spacing: -0.02em;
+      text-decoration: none;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      border: 1px solid var(--green);
+      border-radius: 10px;
+      color: var(--green);
+      background: rgba(88, 230, 169, 0.08);
+      font-family: var(--mono);
+    }
+
+    .nav-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--green);
+      box-shadow: 0 0 12px var(--green);
+    }
+
+    .hero {
+      padding: 88px 0 64px;
+    }
+
+    .eyebrow {
+      margin: 0 0 18px;
+      color: var(--green);
+      font-family: var(--mono);
+      font-size: 13px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 880px;
+      margin: 0;
+      font-size: clamp(44px, 8vw, 88px);
+      line-height: 0.98;
+      letter-spacing: -0.065em;
+    }
+
+    .hero-copy {
+      max-width: 760px;
+      margin: 30px 0 0;
+      color: var(--muted);
+      font-size: clamp(18px, 2.3vw, 23px);
+      line-height: 1.55;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 34px;
+    }
+
+    .primary-button,
+    .secondary-link {
+      display: inline-flex;
+      min-height: 48px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      padding: 0 20px;
+      font-weight: 720;
+      text-decoration: none;
+    }
+
+    .primary-button {
+      border: 0;
+      cursor: pointer;
+      color: #03110c;
+      background: var(--green);
+    }
+
+    .primary-button:hover {
+      background: #7bf0bd;
+    }
+
+    .primary-button:disabled {
+      cursor: wait;
+      opacity: 0.65;
+    }
+
+    .scope-banner {
+      display: grid;
+      grid-template-columns: minmax(170px, 0.7fr) 2fr;
+      gap: 20px;
+      margin-top: 30px;
+      border: 1px solid rgba(246, 207, 112, 0.45);
+      border-radius: 16px;
+      padding: 20px;
+      background: rgba(246, 207, 112, 0.06);
+    }
+
+    .scope-kicker {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      color: var(--yellow);
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    .scope-copy {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .scope-copy strong {
+      color: var(--text);
+    }
+
+    .secondary-link {
+      border: 1px solid var(--border);
+      color: var(--text);
+      background: var(--surface);
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 80px;
+    }
+
+    .metric {
+      padding: 24px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: rgba(13, 25, 23, 0.88);
+    }
+
+    .metric-label {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .metric-value {
+      margin-top: 12px;
+      font-family: var(--mono);
+      font-size: 30px;
+      font-weight: 750;
+    }
+
+    .metric-note {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    section {
+      margin: 0 0 84px;
+    }
+
+    .section-heading {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      align-items: end;
+      margin-bottom: 26px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: clamp(30px, 5vw, 52px);
+      letter-spacing: -0.045em;
+    }
+
+    .section-description {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 1px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--border);
+    }
+
+    .pipeline-step {
+      min-height: 190px;
+      padding: 24px;
+      background: var(--surface);
+    }
+
+    .step-number {
+      color: var(--green);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .pipeline-step h3 {
+      margin: 30px 0 10px;
+      font-size: 20px;
+    }
+
+    .pipeline-step p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
+    .experiment {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .panel {
+      padding: 24px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--surface);
+    }
+
+    .panel-label {
+      margin-bottom: 14px;
+      color: var(--green);
+      font-family: var(--mono);
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .panel h3 {
+      margin: 0 0 12px;
+      font-size: 23px;
+    }
+
+    .panel p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .accepted {
+      display: inline-flex;
+      margin-top: 20px;
+      border: 1px solid var(--green);
+      border-radius: 999px;
+      padding: 7px 11px;
+      color: var(--green);
+      background: var(--green-dark);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .pending {
+      display: inline-flex;
+      margin-top: 20px;
+      border: 1px solid var(--yellow);
+      border-radius: 999px;
+      padding: 7px 11px;
+      color: var(--yellow);
+      background: rgba(246, 207, 112, 0.08);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .experiment-evidence {
+      margin-top: 14px;
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+
+    .experiment-evidence table {
+      min-width: 760px;
+    }
+
+    .result-pill {
+      display: inline-flex;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-family: var(--mono);
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    .result-pill.pass {
+      color: var(--green);
+      background: var(--green-dark);
+    }
+
+    .result-pill.fail {
+      color: var(--red);
+      background: var(--red-dark);
+    }
+
+    .experiment-pending {
+      margin-top: 14px;
+      border-left: 3px solid var(--yellow);
+      padding: 16px 18px;
+      color: var(--muted);
+      background: rgba(246, 207, 112, 0.06);
+      line-height: 1.55;
+    }
+
+    .mapping-table {
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--surface);
+    }
+
+    th,
+    td {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    td {
+      font-size: 14px;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    code {
+      color: var(--blue);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .confidence {
+      color: var(--green);
+      font-family: var(--mono);
+    }
+
+    details {
+      color: var(--muted);
+    }
+
+    summary {
+      cursor: pointer;
+      color: var(--text);
+    }
+
+    .live-proof {
+      padding: 30px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: var(--surface);
+    }
+
+    .proof-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      margin-bottom: 22px;
+    }
+
+    .proof-status {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 13px;
+    }
+
+    .proof-status.success {
+      color: var(--green);
+    }
+
+    .proof-status.failure {
+      color: var(--red);
+    }
+
+    .proof-status-hint {
+      max-width: 720px;
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .proof-status-hint[hidden] {
+      display: none;
+    }
+
+    .proof-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .proof-card {
+      min-width: 0;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      background: #081310;
+    }
+
+    .proof-card h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .verdict {
+      display: inline-flex;
+      margin: 12px 0;
+      border-radius: 999px;
+      padding: 5px 9px;
+      font-family: var(--mono);
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    .verdict.pass {
+      color: var(--green);
+      background: var(--green-dark);
+    }
+
+    .verdict.expected-failure {
+      color: var(--yellow);
+      background: rgba(246, 207, 112, 0.12);
+    }
+
+    .verdict.fail,
+    .verdict.unexpected,
+    .verdict.unavailable {
+      color: var(--red);
+      background: var(--red-dark);
+    }
+
+    .proof-card-note {
+      min-height: 42px;
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    pre {
+      max-height: 330px;
+      overflow: auto;
+      margin: 0;
+      color: #bed0ca;
+      font-family: var(--mono);
+      font-size: 11px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .checks {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .live-checks {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .live-checks[hidden] {
+      display: none;
+    }
+
+    .live-check {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 12px;
+      color: var(--muted);
+      background: #081310;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .live-check.pass {
+      color: var(--green);
+    }
+
+    .live-check.fail {
+      color: var(--red);
+    }
+
+    .check {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--surface);
+    }
+
+    .check-mark {
+      color: var(--green);
+      font-family: var(--mono);
+    }
+
+    .check-name {
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .limitation {
+      border-left: 3px solid var(--yellow);
+      padding: 18px 20px;
+      color: var(--muted);
+      background: rgba(246, 207, 112, 0.06);
+      line-height: 1.6;
+    }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 28px 0 40px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 900px) {
+      .metrics,
+      .pipeline,
+      .proof-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .section-heading,
+      .experiment,
+      .scope-banner {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .nav-meta {
+        display: none;
+      }
+
+      .hero {
+        padding-top: 60px;
+      }
+
+      .metrics,
+      .pipeline,
+      .proof-grid,
+      .checks,
+      .live-checks {
+        grid-template-columns: 1fr;
+      }
+
+      .proof-header,
+      footer {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .mapping-table th:nth-child(1),
+      .mapping-table td:nth-child(1),
+      .mapping-table th:nth-child(5),
+      .mapping-table td:nth-child(5) {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  <div class="shell">
+    <nav class="navigation" aria-label="ProtocolSmith dashboard">
+      <a class="brand" href="#top" aria-label="ProtocolSmith dashboard home">
+        <span class="brand-mark">PS</span>
+        ProtocolSmith
+      </a>
+
+      <div class="nav-meta">
+        <span class="status-dot" aria-hidden="true"></span>
+        Meta Muse Spark 1.3 · evidence loaded
+      </div>
+    </nav>
+
+    <main id="main-content">
+      <header class="hero" id="top">
+        <p class="eyebrow">Black-box API archaeology</p>
+
+        <h1>
+          Make yesterday’s client understand tomorrow’s API.
+        </h1>
+
+        <p class="hero-copy">
+          ProtocolSmith designs controlled experiments, discovers
+          undocumented behavioral changes, compiles a constrained
+          compatibility bridge, and verifies whether the unchanged legacy
+          contract is restored.
+        </p>
+
+        <div class="hero-actions">
+          <button
+            class="primary-button"
+            id="run-proof"
+            type="button"
+            aria-controls="proof-container"
+          >
+            
+              Replay recorded verification
+            
+          </button>
+
+          <a
+            class="secondary-link"
+            href="evidence/adapter_spec.json"
+            target="_blank"
+            rel="noopener"
+          >
+            Inspect generated specification
+          </a>
+
+          
+            <a
+              class="secondary-link"
+              href="evidence/verification_receipt.json"
+              target="_blank"
+              rel="noopener"
+            >
+              Inspect verification receipt
+            </a>
+          
+
+          <a
+            class="secondary-link"
+            href="https://github.com/mkhan48-debug/protocolsmith-meta-hackathon"
+            target="_blank"
+            rel="noopener"
+          >
+            View source on GitHub
+          </a>
+        </div>
+
+        <aside class="scope-banner" aria-label="Demonstration scope">
+          <div class="scope-kicker">
+            <span aria-hidden="true">◇</span>
+            Controlled benchmark
+          </div>
+          <p class="scope-copy">
+            This dashboard demonstrates one intentionally incompatible
+            <strong>Orders API v1 → v2 migration</strong>. It is a
+            reproducible prototype—not a claim of universal API migration
+            or production readiness.
+            
+              This public page replays the committed verification receipt;
+              it does not run a backend or make live API requests.
+            
+          </p>
+        </aside>
+      </header>
+
+      <div
+        class="metrics"
+        role="list"
+        aria-label="Recorded benchmark summary"
+      >
+        <article class="metric" role="listitem">
+          <div class="metric-label">Experiments</div>
+          <div class="metric-value">3</div>
+          <div class="metric-note">Paired black-box probes</div>
+        </article>
+
+        <article class="metric" role="listitem">
+          <div class="metric-label">Changes found</div>
+          <div class="metric-value">10</div>
+          <div class="metric-note">Evidence-backed differences</div>
+        </article>
+
+        <article class="metric" role="listitem">
+          <div class="metric-label">Verification</div>
+          <div class="metric-value">
+            15/15
+          </div>
+          <div class="metric-note">Deterministic contract checks</div>
+        </article>
+
+        <article class="metric" role="listitem">
+          <div class="metric-label">Mean confidence</div>
+          <div class="metric-value">
+            94%
+          </div>
+          <div class="metric-note">Across inferred changes</div>
+        </article>
+      </div>
+
+      <section>
+        <div class="section-heading">
+          <h2>From evidence to proof.</h2>
+          <p class="section-description">
+            Muse handles hypothesis formation and experiment design.
+            A deterministic runtime constrains, executes, and verifies
+            every resulting transformation.
+          </p>
+        </div>
+
+        <div class="pipeline">
+          <article class="pipeline-step">
+            <span class="step-number">01 / OBSERVE</span>
+            <h3>Probe both APIs</h3>
+            <p>
+              Capture status codes, response shapes, values, errors,
+              and pagination behavior.
+            </p>
+          </article>
+
+          <article class="pipeline-step">
+            <span class="step-number">02 / REASON</span>
+            <h3>Muse forms hypotheses</h3>
+            <p>
+              Infer field mappings, transformations, and semantic
+              changes using structured outputs.
+            </p>
+          </article>
+
+          <article class="pipeline-step">
+            <span class="step-number">03 / EXECUTE</span>
+            <h3>Compile safe rules</h3>
+            <p>
+              Convert hypotheses into an allowlisted declarative
+              adapter—never arbitrary generated code.
+            </p>
+          </article>
+
+          <article class="pipeline-step">
+            <span class="step-number">04 / VERIFY</span>
+            <h3>Verify this contract</h3>
+            <p>
+              Replay legacy contracts and produce a machine-readable
+              verification receipt.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-heading">
+          <h2>Muse tests a causal compatibility hypothesis.</h2>
+          <p class="section-description">
+            Muse proposed a bounded hypothesis. ProtocolSmith executed
+            baselines, correct-parameter requests, and swapped-name
+            negative controls. The mapping is accepted only when all
+            six deterministic outcomes agree.
+          </p>
+        </div>
+
+        <div class="experiment">
+          <article class="panel">
+            <div class="panel-label">Model-designed proposal</div>
+            <h3>
+              Does
+              <code>page_size</code>
+              map to
+              <code>limit</code>?
+            </h3>
+            <p>
+              Candidate hypothesis: legacy query param page_size maps to modern query param limit as limit = page_size, so page_size=1 on GET /v1/customers/{id}/orders should correspond to limit=1 on GET /v2/customers/{id}/orders, pending confirmation from controls where baseline and swapped names both return 2 items while correct name truncates to 1 item
+            </p>
+
+            
+              <span class="accepted">
+                Causally confirmed ·
+                6/6
+                controls passed
+              </span>
+            
+          </article>
+
+          <article class="panel">
+            <div class="panel-label">Controlled finding</div>
+            
+              <h3>Version-specific parameter mapping confirmed</h3>
+              <p>
+                The candidate mapping was tested with positive and
+                negative controls. Each API returned two items at
+                baseline, ignored the other version’s parameter name,
+                and returned one item only when given its proposed
+                version-specific parameter.
+              </p>
+            
+          </article>
+        </div>
+
+        
+          <div class="experiment-evidence">
+            <table>
+              <caption class="visually-hidden">
+                Six-case causal-control experiment results
+              </caption>
+              <thead>
+                <tr>
+                  <th>API</th>
+                  <th>Test</th>
+                  <th>Parameter</th>
+                  <th>Observed</th>
+                  <th>Expected</th>
+                  <th>Result</th>
+                </tr>
+              </thead>
+              <tbody>
+                
+                  <tr>
+                    <td>
+                      
+                        Legacy v1
+                      
+                    </td>
+                    <td>
+                      
+                        Baseline
+                      
+                    </td>
+                    <td>
+                      
+                        <span class="metric-note">none</span>
+                      
+                    </td>
+                    <td>2</td>
+                    <td>2</td>
+                    <td>
+                      <span class="result-pill pass">
+                        pass
+                      </span>
+                    </td>
+                  </tr>
+                
+                  <tr>
+                    <td>
+                      
+                        Legacy v1
+                      
+                    </td>
+                    <td>
+                      
+                        Wrong name
+                      
+                    </td>
+                    <td>
+                      
+                        <code>
+                          limit=1
+                        </code>
+                      
+                    </td>
+                    <td>2</td>
+                    <td>2</td>
+                    <td>
+                      <span class="result-pill pass">
+                        pass
+                      </span>
+                    </td>
+                  </tr>
+                
+                  <tr>
+                    <td>
+                      
+                        Legacy v1
+                      
+                    </td>
+                    <td>
+                      
+                        Correct name
+                      
+                    </td>
+                    <td>
+                      
+                        <code>
+                          page_size=1
+                        </code>
+                      
+                    </td>
+                    <td>1</td>
+                    <td>1</td>
+                    <td>
+                      <span class="result-pill pass">
+                        pass
+                      </span>
+                    </td>
+                  </tr>
+                
+                  <tr>
+                    <td>
+                      
+                        Modern v2
+                      
+                    </td>
+                    <td>
+                      
+                        Baseline
+                      
+                    </td>
+                    <td>
+                      
+                        <span class="metric-note">none</span>
+                      
+                    </td>
+                    <td>2</td>
+                    <td>2</td>
+                    <td>
+                      <span class="result-pill pass">
+                        pass
+                      </span>
+                    </td>
+                  </tr>
+                
+                  <tr>
+                    <td>
+                      
+                        Modern v2
+                      
+                    </td>
+                    <td>
+                      
+                        Wrong name
+                      
+                    </td>
+                    <td>
+                      
+                        <code>
+                          page_size=1
+                        </code>
+                      
+                    </td>
+                    <td>2</td>
+                    <td>2</td>
+                    <td>
+                      <span class="result-pill pass">
+                        pass
+                      </span>
+                    </td>
+                  </tr>
+                
+                  <tr>
+                    <td>
+                      
+                        Modern v2
+                      
+                    </td>
+                    <td>
+                      
+                        Correct name
+                      
+                    </td>
+                    <td>
+                      
+                        <code>
+                          limit=1
+                        </code>
+                      
+                    </td>
+                    <td>1</td>
+                    <td>1</td>
+                    <td>
+                      <span class="result-pill pass">
+                        pass
+                      </span>
+                    </td>
+                  </tr>
+                
+              </tbody>
+            </table>
+          </div>
+        
+      </section>
+
+      <section>
+        <div class="section-heading">
+          <h2>Discovered compatibility map.</h2>
+          <p class="section-description">
+            Every rule links legacy and modern behavior to the
+            evidence that supports it.
+          </p>
+        </div>
+
+        <div class="mapping-table">
+          <table>
+            <caption class="visually-hidden">
+              Evidence-backed compatibility mappings
+            </caption>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Category</th>
+                <th>Legacy</th>
+                <th>Modern</th>
+                <th>Confidence</th>
+                <th>Transformation</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              
+                <tr>
+                  <td>1</td>
+                  <td>
+                    request parameter rename
+                  </td>
+                  <td><code>$.params.page_size</code></td>
+                  <td><code>$.params.limit</code></td>
+                  <td class="confidence">
+                    100%
+                  </td>
+                  <td>
+                    <details>
+                      <summary>View rule</summary>
+                      <p>Rename query param page_size to limit; integer value passes through unchanged: limit = page_size</p>
+                    </details>
+                  </td>
+                </tr>
+              
+                <tr>
+                  <td>2</td>
+                  <td>
+                    response nesting change
+                  </td>
+                  <td><code>$.customer_id</code></td>
+                  <td><code>$.customer.id</code></td>
+                  <td class="confidence">
+                    95%
+                  </td>
+                  <td>
+                    <details>
+                      <summary>View rule</summary>
+                      <p>Move string value into nested object: modern.customer = {id: legacy.customer_id}</p>
+                    </details>
+                  </td>
+                </tr>
+              
+                <tr>
+                  <td>3</td>
+                  <td>
+                    response field rename
+                  </td>
+                  <td><code>$.orders</code></td>
+                  <td><code>$.data</code></td>
+                  <td class="confidence">
+                    95%
+                  </td>
+                  <td>
+                    <details>
+                      <summary>View rule</summary>
+                      <p>Rename top-level array $.orders to $.data; element order preserved, 1:1 element mapping</p>
+                    </details>
+                  </td>
+                </tr>
+              
+                <tr>
+                  <td>4</td>
+                  <td>
+                    response field rename
+                  </td>
+                  <td><code>$.orders[].id</code></td>
+                  <td><code>$.data[].order_id</code></td>
+                  <td class="confidence">
+                    100%
+                  </td>
+                  <td>
+                    <details>
+                      <summary>View rule</summary>
+                      <p>Rename field id to order_id; string value identical: order_id = id</p>
+                    </details>
+                  </td>
+                </tr>
+              
+                <tr>
+                  <td>5</td>
+                  <td>
+                    response field rename
+                  </td>
+                  <td><code>$.orders[].status</code></td>
+                  <td><code>$.data[].state</code></td>
+                  <td class="confidence">
+                    95%
+                  </td>
+                  <td>
+                    <details>
+                      <summary>View rule</summary>
+                      <p>Rename field status to state; observed values &#39;paid&#39;,&#39;shipped&#39; pass through unchanged: state = status</p>
+                    </details>
+                  </td>
+                </tr>
+              
+                <tr>
+                  <td>6</td>
+                  <td>
+                    value transformation
+                  </td>
+                  <td><code>$.orders[].total_cents</code></td>
+                  <td><code>$.data[].amount.value</code></td>
+                  <td class="confidence">
+                    95%
+                  </td>
+                  <td>
+                    <details>
+                      <summary>View rule</summary>
+                      <p>Convert integer cents to decimal string dollars nested under amount: amount.value = format(total_cents/100, &#39;.2f&#39;) as string; amount.currency observed as &#39;USD&#39; with no legacy equivalent; reverse: total_cents = int(round(float(amount.value)*100))</p>
+                    </details>
+                  </td>
+                </tr>
+              
+                <tr>
+                  <td>7</td>
+                  <td>
+                    value transformation
+                  </td>
+                  <td><code>$.orders[].created_at</code></td>
+                  <td><code>$.data[].created</code></td>
+                  <td class="confidence">
+                    90%
+                  </td>
+                  <td>
+                    <details>
+                      <summary>View rule</summary>
+                      <p>Truncate ISO8601 datetime to date: created = created_at[0:10] (YYYY-MM-DD); time component dropped, reverse requires midnight UTC reconstruction only if needed</p>
+                    </details>
+                  </td>
+                </tr>
+              
+                <tr>
+                  <td>8</td>
+                  <td>
+                    pagination change
+                  </td>
+                  <td><code>$.next_page</code></td>
+                  <td><code>$.pagination.next_cursor</code></td>
+                  <td class="confidence">
+                    85%
+                  </td>
+                  <td>
+                    <details>
+                      <summary>View rule</summary>
+                      <p>Move pagination token into nested object: pagination.next_cursor replaces next_page; both null when no further pages in observations; request pagination controlled by limit</p>
+                    </details>
+                  </td>
+                </tr>
+              
+                <tr>
+                  <td>9</td>
+                  <td>
+                    error semantics change
+                  </td>
+                  <td><code>$.status_code</code></td>
+                  <td><code>$.status_code</code></td>
+                  <td class="confidence">
+                    95%
+                  </td>
+                  <td>
+                    <details>
+                      <summary>View rule</summary>
+                      <p>Missing customer changes from HTTP 404 to HTTP 200 with empty data; adapter must map modern 200 with $.error.type==&#39;unknown_customer&#39; to legacy 404</p>
+                    </details>
+                  </td>
+                </tr>
+              
+                <tr>
+                  <td>10</td>
+                  <td>
+                    error semantics change
+                  </td>
+                  <td><code>$.detail</code></td>
+                  <td><code>$.error</code></td>
+                  <td class="confidence">
+                    90%
+                  </td>
+                  <td>
+                    <details>
+                      <summary>View rule</summary>
+                      <p>Map modern error {type:&#39;unknown_customer&#39;,customer:&lt;id&gt;} to legacy detail {code:&#39;CUSTOMER_NOT_FOUND&#39;,message:&#39;Customer does not exist&#39;}; modern error response has $.data=[] and omits $.customer and $.pagination; modern success has no $.error</p>
+                    </details>
+                  </td>
+                </tr>
+              
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="live">
+        <div class="section-heading">
+          <h2>
+            
+              The recorded verification replay.
+            
+          </h2>
+          <p class="section-description">
+            In this benchmark, the unchanged legacy contract succeeds
+            against API v1,
+            fails as expected when sent directly to API v2, and succeeds
+            again through the generated bridge.
+            
+              This button replays the committed, machine-readable receipt
+              generated at 2026-10-31T02:40:39.171881+00:00. It makes no network
+              request and is not a substitute for running the local proof.
+            
+          </p>
+        </div>
+
+        <div class="live-proof" id="proof-container" aria-busy="false">
+          <div class="proof-header">
+            <div>
+              <strong>
+                
+                  Recorded evidence
+                
+              </strong>
+              <div
+                class="proof-status"
+                id="proof-status"
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                
+                  Ready to replay the committed receipt
+                
+              </div>
+              <div
+                class="proof-status-hint"
+                id="proof-status-hint"
+                hidden
+              ></div>
+            </div>
+
+            <button
+              class="primary-button"
+              id="run-proof-secondary"
+              type="button"
+              aria-controls="proof-container"
+            >
+              
+                Replay receipt
+              
+            </button>
+          </div>
+
+          <div class="proof-grid">
+            <article class="proof-card">
+              <h3>Legacy API v1</h3>
+              <span class="verdict" id="legacy-verdict">
+                waiting
+              </span>
+              <p class="proof-card-note">
+                Expected result: the unchanged client works against its
+                original contract.
+              </p>
+              <pre
+                id="legacy-output"
+                aria-label="Legacy API response"
+              >No replay yet.</pre>
+            </article>
+
+            <article class="proof-card">
+              <h3>Modern API v2 direct</h3>
+              <span class="verdict" id="modern-verdict">
+                waiting
+              </span>
+              <p class="proof-card-note">
+                Expected result: the unchanged legacy client cannot
+                interpret the v2 response without ProtocolSmith.
+              </p>
+              <pre
+                id="modern-output"
+                aria-label="Direct modern API response"
+              >No replay yet.</pre>
+            </article>
+
+            <article class="proof-card">
+              <h3>ProtocolSmith bridge</h3>
+              <span class="verdict" id="bridge-verdict">
+                waiting
+              </span>
+              <p class="proof-card-note">
+                Expected result: the generated specification restores the
+                legacy contract.
+              </p>
+              <pre
+                id="bridge-output"
+                aria-label="ProtocolSmith bridge response"
+              >No replay yet.</pre>
+            </article>
+          </div>
+
+          <div
+            class="live-checks"
+            id="live-checks"
+            role="list"
+            aria-label="Recorded contract checks"
+            hidden
+          ></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-heading">
+          <h2>Verification receipt.</h2>
+          <p class="section-description">
+            15 of 15
+            recorded contract checks passed.
+          </p>
+        </div>
+
+        <div class="checks">
+          
+            <article class="check">
+              <span class="check-mark">
+                ✓
+              </span>
+
+              <span class="check-name">
+                legacy API succeeds
+              </span>
+            </article>
+          
+            <article class="check">
+              <span class="check-mark">
+                ✓
+              </span>
+
+              <span class="check-name">
+                modern API is directly incompatible
+              </span>
+            </article>
+          
+            <article class="check">
+              <span class="check-mark">
+                ✓
+              </span>
+
+              <span class="check-name">
+                bridge returns legacy success status
+              </span>
+            </article>
+          
+            <article class="check">
+              <span class="check-mark">
+                ✓
+              </span>
+
+              <span class="check-name">
+                generated adapter identity disclosed
+              </span>
+            </article>
+          
+            <article class="check">
+              <span class="check-mark">
+                ✓
+              </span>
+
+              <span class="check-name">
+                root customer identifier preserved
+              </span>
+            </article>
+          
+            <article class="check">
+              <span class="check-mark">
+                ✓
+              </span>
+
+              <span class="check-name">
+                one-order collection size preserved
+              </span>
+            </article>
+          
+            <article class="check">
+              <span class="check-mark">
+                ✓
+              </span>
+
+              <span class="check-name">
+                order field preserved: id
+              </span>
+            </article>
+          
+            <article class="check">
+              <span class="check-mark">
+                ✓
+              </span>
+
+              <span class="check-name">
+                order field preserved: total_cents
+              </span>
+            </article>
+          
+            <article class="check">
+              <span class="check-mark">
+                ✓
+              </span>
+
+              <span class="check-name">
+                order field preserved: status
+              </span>
+            </article>
+          
+            <article class="check">
+              <span class="check-mark">
+                ✓
+              </span>
+
+              <span class="check-name">
+                created_at calendar date preserved
+              </span>
+            </article>
+          
+            <article class="check">
+              <span class="check-mark">
+                ✓
+              </span>
+
+              <span class="check-name">
+                page-size translation preserves two results
+              </span>
+            </article>
+          
+            <article class="check">
+              <span class="check-mark">
+                ✓
+              </span>
+
+              <span class="check-name">
+                pagination value preserved
+              </span>
+            </article>
+          
+            <article class="check">
+              <span class="check-mark">
+                ✓
+              </span>
+
+              <span class="check-name">
+                missing-customer status restored
+              </span>
+            </article>
+          
+            <article class="check">
+              <span class="check-mark">
+                ✓
+              </span>
+
+              <span class="check-name">
+                missing-customer error body restored
+              </span>
+            </article>
+          
+            <article class="check">
+              <span class="check-mark">
+                ✓
+              </span>
+
+              <span class="check-name">
+                lossy date conversion disclosed
+              </span>
+            </article>
+          
+        </div>
+      </section>
+
+      <section>
+        <div class="section-heading">
+          <h2>Honest about information loss.</h2>
+          <p class="section-description">
+            Information loss is disclosed and scoped. Behavior unsupported
+            by evidence fails closed.
+          </p>
+        </div>
+
+        <div class="limitation">
+          <strong>
+            created_at
+          </strong>
+          —
+          The modern API retains only the calendar date. ProtocolSmith reconstructs midnight UTC and exposes an explicit response warning.
+        </div>
+      </section>
+
+      <noscript>
+        <div class="limitation">
+          JavaScript is required to
+          
+            replay the recorded evidence.
+          
+          The recorded evidence and verification receipt above remain
+          available without it.
+        </div>
+      </noscript>
+    </main>
+
+    <footer>
+      <span>
+        Built by Muhammad Rafae Khan during the Meta Global AI
+        Developer Hackathon.
+      </span>
+      <span>
+        <a
+          href="https://github.com/mkhan48-debug/protocolsmith-meta-hackathon"
+          target="_blank"
+          rel="noopener"
+        >Source &amp; reproducibility</a>
+        
+          · <a
+            href="https://github.com/mkhan48-debug/protocolsmith-meta-hackathon#quick-start"
+            target="_blank"
+            rel="noopener"
+          >Run the live proof locally</a>
+        
+        · Indie Developer · Push the Frontier
+      </span>
+    </footer>
+  </div>
+
+  <script>
+    const buttons = [
+      document.getElementById("run-proof"),
+      document.getElementById("run-proof-secondary")
+    ];
+
+    const proofStatus = document.getElementById("proof-status");
+    const proofStatusHint = document.getElementById("proof-status-hint");
+    const proofContainer = document.getElementById("proof-container");
+    
+      const recordedProof = {"checks": [{"evidence": "status=200", "name": "legacy API succeeds", "passed": true}, {"evidence": "modern response intentionally has no legacy orders field", "name": "modern API is directly incompatible", "passed": true}, {"evidence": "legacy=200, bridge=200", "name": "bridge returns legacy success status", "passed": true}, {"evidence": "adapter=\u0027generated-spec\u0027", "name": "generated adapter identity disclosed", "passed": true}, {"evidence": "customer_id values compared", "name": "root customer identifier preserved", "passed": true}, {"evidence": "legacy_count=1, bridge_count=1", "name": "one-order collection size preserved", "passed": true}, {"evidence": "legacy=\u0027order-1001\u0027, bridge=\u0027order-1001\u0027", "name": "order field preserved: id", "passed": true}, {"evidence": "legacy=2599, bridge=2599", "name": "order field preserved: total_cents", "passed": true}, {"evidence": "legacy=\u0027paid\u0027, bridge=\u0027paid\u0027", "name": "order field preserved: status", "passed": true}, {"evidence": "legacy_date=2026-10-20, bridge_date=2026-10-20", "name": "created_at calendar date preserved", "passed": true}, {"evidence": "legacy_count=2, bridge_count=2", "name": "page-size translation preserves two results", "passed": true}, {"evidence": "next_page values compared", "name": "pagination value preserved", "passed": true}, {"evidence": "legacy=404, bridge=404", "name": "missing-customer status restored", "passed": true}, {"evidence": "legacy and bridge error bodies compared exactly", "name": "missing-customer error body restored", "passed": true}, {"evidence": "warning=\u0027created_at reconstructed at midnight UTC because the modern API discarded the original time\u0027", "name": "lossy date conversion disclosed", "passed": true}], "mode": "recorded-verification-replay", "recorded_at": "2026-10-31T02:40:39.171881+00:00", "result": "passed", "steps": {"legacy_v1": {"adapter": null, "body": {"customer_id": "customer-123", "next_page": null, "orders": [{"created_at": "2026-10-20T14:30:00Z", "id": "order-1001", "status": "paid", "total_cents": 2599}]}, "status_code": 200, "url": "http://127.0.0.1:8000/v1/customers/customer-123/orders?page_size=1", "verdict": "pass", "warning": null}, "modern_v2_direct": {"adapter": null, "body": {"customer": {"id": "customer-123"}, "data": [{"amount": {"currency": "USD", "value": "25.99"}, "created": "2026-10-20", "order_id": "order-1001", "state": "paid"}, {"amount": {"currency": "USD", "value": "10.99"}, "created": "2026-10-21", "order_id": "order-1002", "state": "shipped"}], "pagination": {"next_cursor": null}}, "status_code": 200, "url": "http://127.0.0.1:8000/v2/customers/customer-123/orders?page_size=1", "verdict": "expected-failure", "warning": null}, "protocolsmith_bridge": {"adapter": "generated-spec", "body": {"customer_id": "customer-123", "next_page": null, "orders": [{"created_at": "2026-10-20T00:00:00Z", "id": "order-1001", "status": "paid", "total_cents": 2599}]}, "status_code": 200, "url": "http://127.0.0.1:8001/customers/customer-123/orders?page_size=1", "verdict": "pass", "warning": "created_at reconstructed at midnight UTC because the modern API discarded the original time"}}};
+    
+
+    function resetProofCards() {
+      ["legacy", "modern", "bridge"].forEach((prefix) => {
+        const verdict = document.getElementById(`${prefix}-verdict`);
+        const output = document.getElementById(`${prefix}-output`);
+        verdict.textContent = "running";
+        verdict.className = "verdict";
+        output.textContent = 
+          "Loading the saved verification evidence…";
+        
+      });
+    }
+
+    function showUnavailable(message) {
+      ["legacy", "modern", "bridge"].forEach((prefix) => {
+        const verdict = document.getElementById(`${prefix}-verdict`);
+        const output = document.getElementById(`${prefix}-output`);
+        verdict.textContent = "unavailable";
+        verdict.className = "verdict unavailable";
+        output.textContent = message;
+      });
+    }
+
+    function showStep(prefix, step) {
+      const verdict = document.getElementById(`${prefix}-verdict`);
+      const output = document.getElementById(`${prefix}-output`);
+
+      verdict.textContent = step.verdict === "expected-failure"
+        ? "expected incompatibility"
+        : step.verdict;
+      verdict.className = `verdict ${step.verdict}`;
+      output.textContent = JSON.stringify(step, null, 2);
+    }
+
+    function showChecks(checks) {
+      const container = document.getElementById("live-checks");
+      container.replaceChildren();
+
+      checks.forEach((check) => {
+        const item = document.createElement("div");
+        item.className = `live-check ${
+          check.passed ? "pass" : "fail"
+        }`;
+        item.setAttribute("role", "listitem");
+        item.textContent = `${
+          check.passed ? "✓" : "×"
+        } ${check.name}`;
+        container.appendChild(item);
+      });
+
+      container.hidden = false;
+    }
+
+    async function runProof() {
+      const liveChecks = document.getElementById("live-checks");
+      liveChecks.replaceChildren();
+      liveChecks.hidden = true;
+      resetProofCards();
+      proofContainer.setAttribute("aria-busy", "true");
+      proofStatusHint.hidden = true;
+      proofStatusHint.textContent = "";
+
+      buttons.forEach((button) => {
+        button.disabled = true;
+        button.textContent = 
+          "Replaying recorded receipt…";
+        
+      });
+
+      proofStatus.textContent = 
+        "Loading the committed verification evidence…";
+      
+      proofStatus.className = "proof-status";
+
+      document.getElementById("live").scrollIntoView({
+        behavior: "smooth"
+      });
+
+      try {
+        
+          const data = recordedProof;
+        
+
+        showStep("legacy", data.steps.legacy_v1);
+        showStep("modern", data.steps.modern_v2_direct);
+        showStep("bridge", data.steps.protocolsmith_bridge);
+        showChecks(data.checks || []);
+
+        if (data.result === "passed") {
+          proofStatus.textContent = 
+            "RECORDED PASS — unchanged legacy contract restored";
+          
+          proofStatus.className = "proof-status success";
+          proofStatusHint.textContent = 
+            "This result comes from the committed verification receipt. Run the repository locally to reproduce the HTTP proof.";
+          
+          proofStatusHint.hidden = false;
+        } else {
+          proofStatus.textContent =
+            "FAIL — compatibility was not proven";
+          proofStatus.className = "proof-status failure";
+          proofStatusHint.textContent =
+            "ProtocolSmith fails closed when the complete contract cannot be verified.";
+          proofStatusHint.hidden = false;
+        }
+      } catch (error) {
+        proofStatus.textContent = `ERROR — ${error.message}`;
+        proofStatus.className = "proof-status failure";
+        showUnavailable(
+          
+            "The recorded evidence could not be loaded."
+          
+        );
+        proofStatusHint.textContent = 
+          "Inspect the committed verification receipt or run the repository locally to reproduce the proof.";
+        
+        proofStatusHint.hidden = false;
+      } finally {
+        proofContainer.setAttribute("aria-busy", "false");
+        buttons.forEach((button, index) => {
+          button.disabled = false;
+          button.textContent = 
+            index === 0
+              ? "Replay recorded verification"
+              : "Replay again";
+          
+        });
+      }
+    }
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", runProof);
+    });
+  </script>
+</body>
+</html>

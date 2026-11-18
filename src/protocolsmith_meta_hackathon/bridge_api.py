@@ -1,7 +1,7 @@
 import json
 import os
 from datetime import date
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -29,15 +29,13 @@ class AdapterError(RuntimeError):
 
 def load_adapter_artifact() -> tuple[dict[str, Any], dict[str, Any]]:
     if not SPEC_PATH.exists():
-        raise RuntimeError(
-            f"Adapter specification does not exist: {SPEC_PATH}"
-        )
+        raise RuntimeError(f"Adapter specification does not exist: {SPEC_PATH}")
 
     artifact = json.loads(SPEC_PATH.read_text(encoding="utf-8"))
     spec = artifact.get("spec")
 
     if not isinstance(spec, dict):
-        raise RuntimeError("Adapter artifact does not contain a valid spec")
+        raise TypeError("Adapter artifact does not contain a valid spec")
 
     return artifact, spec
 
@@ -89,12 +87,10 @@ def apply_operation(value: Any, operation: str) -> Any:
         try:
             dollars = Decimal(str(value))
         except InvalidOperation as error:
-            raise AdapterError(
-                f"Invalid decimal money value: {value!r}"
-            ) from error
+            raise AdapterError(f"Invalid decimal money value: {value!r}") from error
 
-        cents = (dollars * Decimal("100")).quantize(
-            Decimal("1"),
+        cents = (dollars * Decimal(100)).quantize(
+            Decimal(1),
             rounding=ROUND_HALF_UP,
         )
         return int(cents)
@@ -103,9 +99,7 @@ def apply_operation(value: Any, operation: str) -> Any:
         try:
             parsed_date = date.fromisoformat(str(value))
         except ValueError as error:
-            raise AdapterError(
-                f"Invalid modern date value: {value!r}"
-            ) from error
+            raise AdapterError(f"Invalid modern date value: {value!r}") from error
 
         return f"{parsed_date.isoformat()}T00:00:00Z"
 
@@ -117,18 +111,14 @@ def ensure_supported_currency(
     modern_value_path: str,
 ) -> None:
     if "." not in modern_value_path:
-        raise AdapterError(
-            "Money conversion requires a nested currency field"
-        )
+        raise AdapterError("Money conversion requires a nested currency field")
 
     parent_path = modern_value_path.rsplit(".", 1)[0]
     currency_path = f"{parent_path}.currency"
     currency = get_path(modern_item, currency_path)
 
     if currency != "USD":
-        raise AdapterError(
-            f"Unsupported currency {currency!r}; expected 'USD'"
-        )
+        raise AdapterError(f"Unsupported currency {currency!r}; expected 'USD'")
 
 
 def adapt_item(modern_item: Any) -> dict[str, Any]:
@@ -249,9 +239,7 @@ def compatible_orders(
             content={"detail": {"code": "INVALID_ADAPTER", "message": str(error)}},
         )
 
-    modern_url = (
-        f"{MODERN_BASE_URL}/customers/{customer_id}/orders"
-    )
+    modern_url = f"{MODERN_BASE_URL}/customers/{customer_id}/orders"
 
     try:
         response = httpx.get(
@@ -304,9 +292,7 @@ def compatible_orders(
             )
 
             if observed_customer != customer_id:
-                raise AdapterError(
-                    "Modern error references a different customer"
-                )
+                raise AdapterError("Modern error references a different customer")
 
             return JSONResponse(
                 status_code=error_rule["legacy_status_code"],
@@ -322,9 +308,7 @@ def compatible_orders(
             )
 
         if response.status_code >= 400:
-            raise AdapterError(
-                f"Unexpected modern status code: {response.status_code}"
-            )
+            raise AdapterError(f"Unexpected modern status code: {response.status_code}")
 
         legacy_body = adapt_success_response(modern_body)
 
@@ -350,4 +334,3 @@ def compatible_orders(
             ),
         },
     )
-
