@@ -6,6 +6,41 @@
     name="viewport"
     content="width=device-width, initial-scale=1"
   >
+  <meta
+    name="description"
+    content="ProtocolSmith controlled benchmark: discover, compile, and verify constrained REST API compatibility rules."
+  >
+  <meta property="og:title" content="ProtocolSmith — API Archaeology">
+  <meta
+    property="og:description"
+    content="An evidence-driven prototype for discovering, compiling, and verifying constrained API compatibility rules."
+  >
+  <meta property="og:type" content="website">
+  {% if static_showcase|default(false) %}
+    <link
+      rel="canonical"
+      href="https://mkhan48-debug.github.io/protocolsmith-meta-hackathon/"
+    >
+    <meta
+      property="og:url"
+      content="https://mkhan48-debug.github.io/protocolsmith-meta-hackathon/"
+    >
+    <meta
+      property="og:image"
+      content="https://mkhan48-debug.github.io/protocolsmith-meta-hackathon/assets/protocolsmith-hero.jpg"
+    >
+    <meta
+      property="og:image:alt"
+      content="ProtocolSmith controlled API-compatibility benchmark dashboard"
+    >
+    <meta name="twitter:card" content="summary_large_image">
+  {% endif %}
+  <meta name="color-scheme" content="dark">
+  <link
+    rel="icon"
+    type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2307100f'/%3E%3Crect x='5' y='5' width='54' height='54' rx='11' fill='none' stroke='%2358e6a9' stroke-width='3'/%3E%3Ctext x='32' y='40' text-anchor='middle' font-family='monospace' font-size='24' font-weight='700' fill='%2358e6a9'%3EPS%3C/text%3E%3C/svg%3E"
+  >
   <title>ProtocolSmith — API Archaeology Console</title>
 
   <style>
@@ -33,6 +68,21 @@
 
     html {
       scroll-behavior: smooth;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+      }
     }
 
     body {
@@ -64,6 +114,34 @@
       outline-offset: 3px;
     }
 
+    .skip-link {
+      position: fixed;
+      z-index: 100;
+      top: 12px;
+      left: 12px;
+      transform: translateY(-180%);
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: #03110c;
+      background: var(--yellow);
+      font-weight: 750;
+      text-decoration: none;
+    }
+
+    .skip-link:focus {
+      transform: translateY(0);
+    }
+
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
     .shell {
       width: min(1180px, calc(100% - 32px));
       margin: 0 auto;
@@ -83,6 +161,7 @@
       gap: 12px;
       font-weight: 760;
       letter-spacing: -0.02em;
+      text-decoration: none;
     }
 
     .brand-mark {
@@ -176,6 +255,39 @@
     .primary-button:disabled {
       cursor: wait;
       opacity: 0.65;
+    }
+
+    .scope-banner {
+      display: grid;
+      grid-template-columns: minmax(170px, 0.7fr) 2fr;
+      gap: 20px;
+      margin-top: 30px;
+      border: 1px solid rgba(246, 207, 112, 0.45);
+      border-radius: 16px;
+      padding: 20px;
+      background: rgba(246, 207, 112, 0.06);
+    }
+
+    .scope-kicker {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      color: var(--yellow);
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+    }
+
+    .scope-copy {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .scope-copy strong {
+      color: var(--text);
     }
 
     .secondary-link {
@@ -456,6 +568,18 @@
       color: var(--red);
     }
 
+    .proof-status-hint {
+      max-width: 720px;
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .proof-status-hint[hidden] {
+      display: none;
+    }
+
     .proof-grid {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -496,7 +620,8 @@
     }
 
     .verdict.fail,
-    .verdict.unexpected {
+    .verdict.unexpected,
+    .verdict.unavailable {
       color: var(--red);
       background: var(--red-dark);
     }
@@ -602,7 +727,8 @@
       }
 
       .section-heading,
-      .experiment {
+      .experiment,
+      .scope-banner {
         grid-template-columns: 1fr;
       }
     }
@@ -641,21 +767,23 @@
 </head>
 
 <body>
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
   <div class="shell">
-    <nav class="navigation">
-      <div class="brand">
+    <nav class="navigation" aria-label="ProtocolSmith dashboard">
+      <a class="brand" href="#top" aria-label="ProtocolSmith dashboard home">
         <span class="brand-mark">PS</span>
         ProtocolSmith
-      </div>
+      </a>
 
       <div class="nav-meta">
-        <span class="status-dot"></span>
+        <span class="status-dot" aria-hidden="true"></span>
         Meta {{ model_display_name }} · evidence loaded
       </div>
     </nav>
 
-    <main>
-      <header class="hero">
+    <main id="main-content">
+      <header class="hero" id="top">
         <p class="eyebrow">Black-box API archaeology</p>
 
         <h1>
@@ -665,8 +793,8 @@
         <p class="hero-copy">
           ProtocolSmith designs controlled experiments, discovers
           undocumented behavioral changes, compiles a constrained
-          compatibility bridge, and proves the unchanged legacy client
-          works again.
+          compatibility bridge, and verifies whether the unchanged legacy
+          contract is restored.
         </p>
 
         <div class="hero-actions">
@@ -674,35 +802,84 @@
             class="primary-button"
             id="run-proof"
             type="button"
+            aria-controls="proof-container"
           >
-            Run live compatibility proof
+            {% if static_showcase|default(false) %}
+              Replay recorded verification
+            {% else %}
+              Run live compatibility proof
+            {% endif %}
           </button>
 
           <a
             class="secondary-link"
-            href="/spec"
+            href="{% if static_showcase|default(false) %}evidence/adapter_spec.json{% else %}/spec{% endif %}"
             target="_blank"
             rel="noopener"
           >
             Inspect generated specification
           </a>
+
+          {% if static_showcase|default(false) %}
+            <a
+              class="secondary-link"
+              href="evidence/verification_receipt.json"
+              target="_blank"
+              rel="noopener"
+            >
+              Inspect verification receipt
+            </a>
+          {% endif %}
+
+          <a
+            class="secondary-link"
+            href="https://github.com/mkhan48-debug/protocolsmith-meta-hackathon"
+            target="_blank"
+            rel="noopener"
+          >
+            View source on GitHub
+          </a>
         </div>
+
+        <aside class="scope-banner" aria-label="Demonstration scope">
+          <div class="scope-kicker">
+            <span aria-hidden="true">◇</span>
+            Controlled benchmark
+          </div>
+          <p class="scope-copy">
+            This dashboard demonstrates one intentionally incompatible
+            <strong>Orders API v1 → v2 migration</strong>. It is a
+            reproducible prototype—not a claim of universal API migration
+            or production readiness.
+            {% if static_showcase|default(false) %}
+              This public page replays the committed verification receipt;
+              it does not run a backend or make live API requests.
+            {% else %}
+              The live replay uses a saved, validated specification and
+              does not send requests to external services.
+            {% endif %}
+          </p>
+        </aside>
       </header>
 
-      <div class="metrics">
-        <article class="metric">
+      <div
+        class="metrics"
+        role="list"
+        aria-label="Recorded benchmark summary"
+      >
+        <article class="metric" role="listitem">
           <div class="metric-label">Experiments</div>
           <div class="metric-value">{{ experiment_count }}</div>
           <div class="metric-note">Paired black-box probes</div>
         </article>
 
-        <article class="metric">
+        <article class="metric" role="listitem">
           <div class="metric-label">Changes found</div>
           <div class="metric-value">{{ change_count }}</div>
           <div class="metric-note">Evidence-backed differences</div>
         </article>
 
-        <article class="metric">
+        <article class="metric" role="listitem">
           <div class="metric-label">Verification</div>
           <div class="metric-value">
             {{ verification_passed }}/{{ verification_total }}
@@ -710,7 +887,7 @@
           <div class="metric-note">Deterministic contract checks</div>
         </article>
 
-        <article class="metric">
+        <article class="metric" role="listitem">
           <div class="metric-label">Mean confidence</div>
           <div class="metric-value">
             {{ "%.0f"|format(average_confidence * 100) }}%
@@ -759,7 +936,7 @@
 
           <article class="pipeline-step">
             <span class="step-number">04 / VERIFY</span>
-            <h3>Prove compatibility</h3>
+            <h3>Verify this contract</h3>
             <p>
               Replay legacy contracts and produce a machine-readable
               verification receipt.
@@ -839,6 +1016,9 @@
         {% if active_cases %}
           <div class="experiment-evidence">
             <table>
+              <caption class="visually-hidden">
+                Six-case causal-control experiment results
+              </caption>
               <thead>
                 <tr>
                   <th>API</th>
@@ -912,6 +1092,9 @@
 
         <div class="mapping-table">
           <table>
+            <caption class="visually-hidden">
+              Evidence-backed compatibility mappings
+            </caption>
             <thead>
               <tr>
                 <th>#</th>
@@ -952,20 +1135,40 @@
 
       <section id="live">
         <div class="section-heading">
-          <h2>The decisive live proof.</h2>
+          <h2>
+            {% if static_showcase|default(false) %}
+              The recorded verification replay.
+            {% else %}
+              The decisive live proof.
+            {% endif %}
+          </h2>
           <p class="section-description">
-            The unchanged legacy contract succeeds against API v1,
+            In this benchmark, the unchanged legacy contract succeeds
+            against API v1,
             fails as expected when sent directly to API v2, and succeeds
-            again through the generated bridge. This button performs a
-            live deterministic replay using a previously generated and
-            validated Muse specification; it does not call Muse again.
+            again through the generated bridge.
+            {% if static_showcase|default(false) %}
+              This button replays the committed, machine-readable receipt
+              generated at {{ static_generated_at }}. It makes no network
+              request and is not a substitute for running the local proof.
+            {% else %}
+              This button performs a live deterministic replay using a
+              previously generated and validated Muse specification; it
+              does not call Muse again.
+            {% endif %}
           </p>
         </div>
 
-        <div class="live-proof">
+        <div class="live-proof" id="proof-container" aria-busy="false">
           <div class="proof-header">
             <div>
-              <strong>Live execution</strong>
+              <strong>
+                {% if static_showcase|default(false) %}
+                  Recorded evidence
+                {% else %}
+                  Live execution
+                {% endif %}
+              </strong>
               <div
                 class="proof-status"
                 id="proof-status"
@@ -973,16 +1176,30 @@
                 aria-live="polite"
                 aria-atomic="true"
               >
-                Ready to run
+                {% if static_showcase|default(false) %}
+                  Ready to replay the committed receipt
+                {% else %}
+                  Ready to run
+                {% endif %}
               </div>
+              <div
+                class="proof-status-hint"
+                id="proof-status-hint"
+                hidden
+              ></div>
             </div>
 
             <button
               class="primary-button"
               id="run-proof-secondary"
               type="button"
+              aria-controls="proof-container"
             >
-              Execute now
+              {% if static_showcase|default(false) %}
+                Replay receipt
+              {% else %}
+                Execute now
+              {% endif %}
             </button>
           </div>
 
@@ -999,7 +1216,7 @@
               <pre
                 id="legacy-output"
                 aria-label="Legacy API response"
-              >No run yet.</pre>
+              >{% if static_showcase|default(false) %}No replay yet.{% else %}No run yet.{% endif %}</pre>
             </article>
 
             <article class="proof-card">
@@ -1014,7 +1231,7 @@
               <pre
                 id="modern-output"
                 aria-label="Direct modern API response"
-              >No run yet.</pre>
+              >{% if static_showcase|default(false) %}No replay yet.{% else %}No run yet.{% endif %}</pre>
             </article>
 
             <article class="proof-card">
@@ -1029,14 +1246,15 @@
               <pre
                 id="bridge-output"
                 aria-label="ProtocolSmith bridge response"
-              >No run yet.</pre>
+              >{% if static_showcase|default(false) %}No replay yet.{% else %}No run yet.{% endif %}</pre>
             </article>
           </div>
 
           <div
             class="live-checks"
             id="live-checks"
-            aria-label="Live contract checks"
+            role="list"
+            aria-label="{% if static_showcase|default(false) %}Recorded contract checks{% else %}Live contract checks{% endif %}"
             hidden
           ></div>
         </div>
@@ -1070,8 +1288,8 @@
         <div class="section-heading">
           <h2>Honest about information loss.</h2>
           <p class="section-description">
-            Compatibility is not declared when the evidence cannot
-            support it.
+            Information loss is disclosed and scoped. Behavior unsupported
+            by evidence fails closed.
           </p>
         </div>
 
@@ -1086,6 +1304,19 @@
           ) }}
         </div>
       </section>
+
+      <noscript>
+        <div class="limitation">
+          JavaScript is required to
+          {% if static_showcase|default(false) %}
+            replay the recorded evidence.
+          {% else %}
+            execute the live replay.
+          {% endif %}
+          The recorded evidence and verification receipt above remain
+          available without it.
+        </div>
+      </noscript>
     </main>
 
     <footer>
@@ -1093,7 +1324,21 @@
         Built by Muhammad Rafae Khan during the Meta Global AI
         Developer Hackathon.
       </span>
-      <span>Indie Developer · Push the Frontier</span>
+      <span>
+        <a
+          href="https://github.com/mkhan48-debug/protocolsmith-meta-hackathon"
+          target="_blank"
+          rel="noopener"
+        >Source &amp; reproducibility</a>
+        {% if static_showcase|default(false) %}
+          · <a
+            href="https://github.com/mkhan48-debug/protocolsmith-meta-hackathon#quick-start"
+            target="_blank"
+            rel="noopener"
+          >Run the live proof locally</a>
+        {% endif %}
+        · Indie Developer · Push the Frontier
+      </span>
     </footer>
   </div>
 
@@ -1104,6 +1349,35 @@
     ];
 
     const proofStatus = document.getElementById("proof-status");
+    const proofStatusHint = document.getElementById("proof-status-hint");
+    const proofContainer = document.getElementById("proof-container");
+    {% if static_showcase|default(false) %}
+      const recordedProof = {{ static_proof|tojson }};
+    {% endif %}
+
+    function resetProofCards() {
+      ["legacy", "modern", "bridge"].forEach((prefix) => {
+        const verdict = document.getElementById(`${prefix}-verdict`);
+        const output = document.getElementById(`${prefix}-output`);
+        verdict.textContent = "running";
+        verdict.className = "verdict";
+        output.textContent = {% if static_showcase|default(false) %}
+          "Loading the saved verification evidence…";
+        {% else %}
+          "Waiting for the local service response…";
+        {% endif %}
+      });
+    }
+
+    function showUnavailable(message) {
+      ["legacy", "modern", "bridge"].forEach((prefix) => {
+        const verdict = document.getElementById(`${prefix}-verdict`);
+        const output = document.getElementById(`${prefix}-output`);
+        verdict.textContent = "unavailable";
+        verdict.className = "verdict unavailable";
+        output.textContent = message;
+      });
+    }
 
     function showStep(prefix, step) {
       const verdict = document.getElementById(`${prefix}-verdict`);
@@ -1125,6 +1399,7 @@
         item.className = `live-check ${
           check.passed ? "pass" : "fail"
         }`;
+        item.setAttribute("role", "listitem");
         item.textContent = `${
           check.passed ? "✓" : "×"
         } ${check.name}`;
@@ -1138,14 +1413,25 @@
       const liveChecks = document.getElementById("live-checks");
       liveChecks.replaceChildren();
       liveChecks.hidden = true;
+      resetProofCards();
+      proofContainer.setAttribute("aria-busy", "true");
+      proofStatusHint.hidden = true;
+      proofStatusHint.textContent = "";
 
       buttons.forEach((button) => {
         button.disabled = true;
-        button.textContent = "Running live proof…";
+        button.textContent = {% if static_showcase|default(false) %}
+          "Replaying recorded receipt…";
+        {% else %}
+          "Running live proof…";
+        {% endif %}
       });
 
-      proofStatus.textContent =
+      proofStatus.textContent = {% if static_showcase|default(false) %}
+        "Loading the committed verification evidence…";
+      {% else %}
         "Executing five live contract requests across three visible paths…";
+      {% endif %}
       proofStatus.className = "proof-status";
 
       document.getElementById("live").scrollIntoView({
@@ -1153,12 +1439,21 @@
       });
 
       try {
-        const response = await fetch("/api/live-proof");
-        const data = await response.json();
+        {% if static_showcase|default(false) %}
+          const data = recordedProof;
+        {% else %}
+          const response = await fetch("/api/live-proof", {
+            headers: {"Accept": "application/json"}
+          });
+          const contentType = response.headers.get("content-type") || "";
+          const data = contentType.includes("application/json")
+            ? await response.json()
+            : {message: await response.text()};
 
-        if (!response.ok) {
-          throw new Error(data.message || "Live proof unavailable");
-        }
+          if (!response.ok) {
+            throw new Error(data.message || "Live proof unavailable");
+          }
+        {% endif %}
 
         showStep("legacy", data.steps.legacy_v1);
         showStep("modern", data.steps.modern_v2_direct);
@@ -1166,23 +1461,55 @@
         showChecks(data.checks || []);
 
         if (data.result === "passed") {
-          proofStatus.textContent =
+          proofStatus.textContent = {% if static_showcase|default(false) %}
+            "RECORDED PASS — unchanged legacy contract restored";
+          {% else %}
             "PASS — unchanged legacy contract restored";
+          {% endif %}
           proofStatus.className = "proof-status success";
+          proofStatusHint.textContent = {% if static_showcase|default(false) %}
+            "This result comes from the committed verification receipt. Run the repository locally to reproduce the HTTP proof.";
+          {% else %}
+            "The recorded adapter restored this controlled legacy contract. Review the specification and limitations before drawing broader conclusions.";
+          {% endif %}
+          proofStatusHint.hidden = false;
         } else {
           proofStatus.textContent =
             "FAIL — compatibility was not proven";
           proofStatus.className = "proof-status failure";
+          proofStatusHint.textContent =
+            "ProtocolSmith fails closed when the complete contract cannot be verified.";
+          proofStatusHint.hidden = false;
         }
       } catch (error) {
         proofStatus.textContent = `ERROR — ${error.message}`;
         proofStatus.className = "proof-status failure";
+        showUnavailable(
+          {% if static_showcase|default(false) %}
+            "The recorded evidence could not be loaded."
+          {% else %}
+            "The live replay did not return a verifiable response."
+          {% endif %}
+        );
+        proofStatusHint.textContent = {% if static_showcase|default(false) %}
+          "Inspect the committed verification receipt or run the repository locally to reproduce the proof.";
+        {% else %}
+          "The local lab or bridge may not be running. Restart the complete demo from a terminal with: uv run protocolsmith. Wait for both health checks, then reload this page.";
+        {% endif %}
+        proofStatusHint.hidden = false;
       } finally {
+        proofContainer.setAttribute("aria-busy", "false");
         buttons.forEach((button, index) => {
           button.disabled = false;
-          button.textContent = index === 0
-            ? "Run live compatibility proof"
-            : "Execute again";
+          button.textContent = {% if static_showcase|default(false) %}
+            index === 0
+              ? "Replay recorded verification"
+              : "Replay again";
+          {% else %}
+            index === 0
+              ? "Run live compatibility proof"
+              : "Execute again";
+          {% endif %}
         });
       }
     }

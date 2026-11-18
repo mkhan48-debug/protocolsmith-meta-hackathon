@@ -7,15 +7,23 @@
 - **Track:** Indie Developer
 - **Theme:** Push the Frontier
 - **Repository:** https://github.com/mkhan48-debug/protocolsmith-meta-hackathon
-- **Demo video:** Add the final shareable video URL before submission
+- **Recorded-evidence showcase:** https://mkhan48-debug.github.io/protocolsmith-meta-hackathon/
 
 ## One-line pitch
 
-ProtocolSmith actively probes legacy and modern APIs, uses Meta Muse Spark to compile the observed differences into an allowlisted compatibility bridge, and deterministically proves that unchanged legacy software works again.
+In a controlled Orders API migration, ProtocolSmith probes legacy and modern
+behavior, uses Meta Muse Spark to compile supported differences into an
+allowlisted bridge, and deterministically checks that the tested unchanged
+legacy contract works again.
 
 ## Short summary
 
-ProtocolSmith infers and verifies behavioral compatibility rules from paired black-box observations within a bounded migration surface. It uses Meta Muse Spark 1.3 to reason over evidence and design experiments, compiles an allowlisted adapter specification, executes a deterministic bridge, and produces a verification receipt proving that an unchanged legacy client works against a modern API.
+ProtocolSmith infers and verifies behavioral compatibility rules from paired
+black-box observations within a bounded migration surface. It uses Meta Muse
+Spark 1.3 to reason over evidence and design experiments, compiles an
+allowlisted adapter specification, executes a deterministic bridge, and
+produces a verification receipt showing that the tested unchanged legacy
+contract works against the bundled modern API through the bridge.
 
 ## Project description
 
@@ -67,6 +75,10 @@ Pydantic constrains Muse outputs. ProtocolSmith then validates and executes them
 6. Show the 15/15 deterministic verification receipt and disclosed
    timestamp loss.
 
+The public showcase replays the committed receipt without a backend and is
+explicitly labeled as recorded evidence. The local FastAPI demonstration is
+the live proof used for judging.
+
 ## Honest limitations
 
 - The prototype uses one controlled synthetic Orders domain and one endpoint family.
@@ -74,6 +86,11 @@ Pydantic constrains Muse outputs. ProtocolSmith then validates and executes them
 - The active probe causally supports one request-parameter mapping; it does not prove every inferred mapping independently.
 - The modern example discards time-of-day information. ProtocolSmith reconstructs midnight UTC and exposes the loss explicitly.
 - Remote targets require explicit opt-in, and production deployment would require stronger credential, redaction, isolation, and rate-limiting policies.
+
+The exact evidence boundary, including the distinction between the six-case
+parameter probe and the broader paired-observation rules, is documented in
+[`docs/CONTROLLED_BENCHMARK.md`](docs/CONTROLLED_BENCHMARK.md). Reviewers can
+reproduce the local proof with [`docs/DEMO.md`](docs/DEMO.md).
 
 ## New-work declaration
 

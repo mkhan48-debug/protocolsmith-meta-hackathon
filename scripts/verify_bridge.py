@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -46,12 +46,8 @@ def fetch(
         "url": str(response.request.url),
         "status_code": response.status_code,
         "body": body,
-        "adapter": response.headers.get(
-            "x-protocolsmith-adapter"
-        ),
-        "adapter_warning": response.headers.get(
-            "x-protocolsmith-warning"
-        ),
+        "adapter": response.headers.get("x-protocolsmith-adapter"),
+        "adapter_warning": response.headers.get("x-protocolsmith-warning"),
     }
 
 
@@ -134,10 +130,7 @@ def main() -> None:
         checks,
         "bridge returns legacy success status",
         bridge_one["status_code"] == legacy_one["status_code"] == 200,
-        (
-            f"legacy={legacy_one['status_code']}, "
-            f"bridge={bridge_one['status_code']}"
-        ),
+        (f"legacy={legacy_one['status_code']}, bridge={bridge_one['status_code']}"),
     )
     add_check(
         checks,
@@ -150,14 +143,10 @@ def main() -> None:
     bridge_body = bridge_one["body"]
 
     legacy_orders = (
-        legacy_body.get("orders", [])
-        if isinstance(legacy_body, dict)
-        else []
+        legacy_body.get("orders", []) if isinstance(legacy_body, dict) else []
     )
     bridge_orders = (
-        bridge_body.get("orders", [])
-        if isinstance(bridge_body, dict)
-        else []
+        bridge_body.get("orders", []) if isinstance(bridge_body, dict) else []
     )
 
     add_check(
@@ -166,8 +155,7 @@ def main() -> None:
         (
             isinstance(legacy_body, dict)
             and isinstance(bridge_body, dict)
-            and legacy_body.get("customer_id")
-            == bridge_body.get("customer_id")
+            and legacy_body.get("customer_id") == bridge_body.get("customer_id")
         ),
         "customer_id values compared",
     )
@@ -175,10 +163,7 @@ def main() -> None:
         checks,
         "one-order collection size preserved",
         len(legacy_orders) == len(bridge_orders) == 1,
-        (
-            f"legacy_count={len(legacy_orders)}, "
-            f"bridge_count={len(bridge_orders)}"
-        ),
+        (f"legacy_count={len(legacy_orders)}, bridge_count={len(bridge_orders)}"),
     )
 
     if legacy_orders and bridge_orders:
@@ -203,10 +188,7 @@ def main() -> None:
             checks,
             "created_at calendar date preserved",
             legacy_date == bridge_date,
-            (
-                f"legacy_date={legacy_date}, "
-                f"bridge_date={bridge_date}"
-            ),
+            (f"legacy_date={legacy_date}, bridge_date={bridge_date}"),
         )
 
     legacy_two_orders = (
@@ -243,11 +225,7 @@ def main() -> None:
     add_check(
         checks,
         "missing-customer status restored",
-        (
-            legacy_missing["status_code"]
-            == bridge_missing["status_code"]
-            == 404
-        ),
+        (legacy_missing["status_code"] == bridge_missing["status_code"] == 404),
         (
             f"legacy={legacy_missing['status_code']}, "
             f"bridge={bridge_missing['status_code']}"
@@ -272,16 +250,12 @@ def main() -> None:
     passed = all(check["passed"] for check in checks)
 
     receipt = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "result": "passed" if passed else "failed",
         "summary": {
             "checks_total": len(checks),
-            "checks_passed": sum(
-                1 for check in checks if check["passed"]
-            ),
-            "checks_failed": sum(
-                1 for check in checks if not check["passed"]
-            ),
+            "checks_passed": sum(1 for check in checks if check["passed"]),
+            "checks_failed": sum(1 for check in checks if not check["passed"]),
         },
         "targets": {
             "legacy": LEGACY_BASE_URL,
@@ -332,4 +306,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

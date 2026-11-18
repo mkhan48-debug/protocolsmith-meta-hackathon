@@ -20,8 +20,7 @@ def read_first_order(base_url: str, customer_id: str) -> str:
     status = first_order["status"]
 
     return (
-        f"Order {order_id}: ${total_dollars:.2f}, "
-        f"created {created_at}, status={status}"
+        f"Order {order_id}: ${total_dollars:.2f}, created {created_at}, status={status}"
     )
 
 
@@ -43,4 +42,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

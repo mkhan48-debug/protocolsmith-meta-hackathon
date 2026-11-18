@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
 
@@ -47,9 +47,7 @@ class ProbeAssessment(BaseModel):
 
 def load_report() -> dict[str, Any]:
     if not REPORT_PATH.exists():
-        raise RuntimeError(
-            "Discovery report is missing. Run discovery first."
-        )
+        raise RuntimeError("Discovery report is missing. Run discovery first.")
 
     return json.loads(REPORT_PATH.read_text(encoding="utf-8"))
 
@@ -99,9 +97,7 @@ repeating an observation.
     context = {
         "summary": report["compatibility_plan"]["summary"],
         "changes": report["compatibility_plan"]["changes"],
-        "unresolved_risks": report["compatibility_plan"][
-            "unresolved_risks"
-        ],
+        "unresolved_risks": report["compatibility_plan"]["unresolved_risks"],
     }
 
     completion = client.beta.chat.completions.parse(
@@ -134,11 +130,7 @@ def perform_request(
     value: int | None,
     collection_field: str,
 ) -> dict[str, Any]:
-    params = (
-        {parameter: value}
-        if parameter is not None and value is not None
-        else {}
-    )
+    params = {parameter: value} if parameter is not None and value is not None else {}
 
     response = httpx.get(
         f"{base_url}/customers/{customer_id}/orders",
@@ -179,8 +171,7 @@ def build_case(
         **result,
         "expected_item_count": expected_item_count,
         "passed": (
-            result["status_code"] == 200
-            and result["item_count"] == expected_item_count
+            result["status_code"] == 200 and result["item_count"] == expected_item_count
         ),
     }
 
@@ -272,16 +263,11 @@ def execute_probe(
     checks = [
         {
             "name": "parameter names are version-specific",
-            "passed": (
-                proposal.legacy_parameter
-                != proposal.modern_parameter
-            ),
+            "passed": (proposal.legacy_parameter != proposal.modern_parameter),
         },
         {
             "name": "all six requests returned HTTP 200",
-            "passed": all(
-                case["status_code"] == 200 for case in cases
-            ),
+            "passed": all(case["status_code"] == 200 for case in cases),
         },
         {
             "name": "all six controlled counts matched",
@@ -293,9 +279,7 @@ def execute_probe(
         "protocol": "six_case_cross_parameter_control_v1",
         "cases": cases,
         "checks": checks,
-        "deterministic_confirmation": all(
-            check["passed"] for check in checks
-        ),
+        "deterministic_confirmation": all(check["passed"] for check in checks),
     }
 
 
@@ -351,10 +335,7 @@ def accept_probe(
     result: dict[str, Any],
     assessment: ProbeAssessment,
 ) -> bool:
-    return (
-        result["deterministic_confirmation"]
-        and assessment.hypothesis_supported
-    )
+    return result["deterministic_confirmation"] and assessment.hypothesis_supported
 
 
 def save_trace(
@@ -363,16 +344,14 @@ def save_trace(
     assessment: ProbeAssessment,
 ) -> None:
     trace = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "model": META_MODEL,
         "mode": "active_model_designed_experiment",
         "proposal": proposal.model_dump(),
         "execution": result,
         "assessment": assessment.model_dump(),
         "final_verdict": {
-            "deterministically_confirmed": result[
-                "deterministic_confirmation"
-            ],
+            "deterministically_confirmed": result["deterministic_confirmation"],
             "model_supported": assessment.hypothesis_supported,
             "accepted": accept_probe(result, assessment),
         },
@@ -393,20 +372,13 @@ def main() -> None:
     print("2/4 Asking Muse Spark to design the next experiment...")
     proposal = ask_muse_to_design_probe(client, report)
 
-    print(
-        "Muse selected: "
-        f"{proposal.legacy_parameter} -> "
-        f"{proposal.modern_parameter}"
-    )
+    print(f"Muse selected: {proposal.legacy_parameter} -> {proposal.modern_parameter}")
     print(f"Hypothesis: {proposal.hypothesis}")
 
     print("3/4 Executing the model-designed experiment...")
     result = execute_probe(proposal)
 
-    case_index = {
-        (case["api"], case["role"]): case
-        for case in result["cases"]
-    }
+    case_index = {(case["api"], case["role"]): case for case in result["cases"]}
     legacy_counts = [
         case_index[("legacy_v1", role)]["item_count"]
         for role in (
@@ -446,14 +418,8 @@ def main() -> None:
 
     print()
     print(f"Finding: {assessment.finding}")
-    print(
-        "Deterministic confirmation: "
-        f"{result['deterministic_confirmation']}"
-    )
-    print(
-        "Muse assessment supported: "
-        f"{assessment.hypothesis_supported}"
-    )
+    print(f"Deterministic confirmation: {result['deterministic_confirmation']}")
+    print(f"Muse assessment supported: {assessment.hypothesis_supported}")
     print(f"Confidence: {assessment.confidence:.2f}")
     print(f"Trace saved to: {TRACE_PATH}")
 
@@ -468,4 +434,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -8,7 +8,6 @@ from pathlib import Path
 
 import httpx
 
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 HOST = "127.0.0.1"
 
@@ -28,9 +27,7 @@ def wait_for_health(
 
     while time.monotonic() < deadline:
         if process.poll() is not None:
-            raise AssertionError(
-                f"Server stopped before becoming ready: {url}"
-            )
+            raise AssertionError(f"Server stopped before becoming ready: {url}")
 
         try:
             response = httpx.get(url, timeout=0.5)
@@ -156,9 +153,7 @@ def test_real_http_stack_restores_unchanged_client_contract(
             environment,
         )
         assert modern_result.returncode != 0
-        assert "Legacy client failed" in (
-            modern_result.stdout + modern_result.stderr
-        )
+        assert "Legacy client failed" in (modern_result.stdout + modern_result.stderr)
 
         bridge_result = run_short_command(
             [*legacy_client, bridge_url],
@@ -173,28 +168,20 @@ def test_real_http_stack_restores_unchanged_client_contract(
             timeout=5.0,
         )
         assert bridge_response.status_code == 200
-        assert (
-            bridge_response.headers["x-protocolsmith-adapter"]
-            == "generated-spec"
-        )
+        assert bridge_response.headers["x-protocolsmith-adapter"] == "generated-spec"
         assert bridge_response.json()["orders"][0]["id"] == "order-1001"
 
         verification = run_short_command(
             [sys.executable, "scripts/verify_bridge.py"],
             environment,
         )
-        assert verification.returncode == 0, (
-            verification.stdout + verification.stderr
-        )
+        assert verification.returncode == 0, verification.stdout + verification.stderr
         assert receipt_path.exists()
 
         receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
         assert receipt["result"] == "passed"
         assert receipt["summary"]["checks_total"] == 15
-        assert (
-            receipt["summary"]["checks_passed"]
-            == receipt["summary"]["checks_total"]
-        )
+        assert receipt["summary"]["checks_passed"] == receipt["summary"]["checks_total"]
         assert any(
             check["name"] == "generated adapter identity disclosed"
             and check["passed"] is True

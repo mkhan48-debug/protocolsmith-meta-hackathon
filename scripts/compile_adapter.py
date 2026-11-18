@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
@@ -125,9 +125,7 @@ Rules:
 
 
 def validate_spec(spec: ExecutableAdapterSpec) -> None:
-    legacy_item_fields = {
-        rule.legacy_field for rule in spec.item_field_rules
-    }
+    legacy_item_fields = {rule.legacy_field for rule in spec.item_field_rules}
     required_item_fields = {
         "id",
         "total_cents",
@@ -141,16 +139,11 @@ def validate_spec(spec: ExecutableAdapterSpec) -> None:
             f"Adapter spec is missing item fields: {missing_item_fields}"
         )
 
-    query_mappings = {
-        rule.legacy_name: rule.modern_name
-        for rule in spec.query_rules
-    }
+    query_mappings = {rule.legacy_name: rule.modern_name for rule in spec.query_rules}
     if "page_size" not in query_mappings:
         raise RuntimeError("Adapter spec does not map page_size")
 
-    root_fields = {
-        rule.legacy_field for rule in spec.root_field_rules
-    }
+    root_fields = {rule.legacy_field for rule in spec.root_field_rules}
     if "customer_id" not in root_fields:
         raise RuntimeError("Adapter spec does not map customer_id")
 
@@ -163,7 +156,7 @@ def validate_spec(spec: ExecutableAdapterSpec) -> None:
 
 def save_spec(spec: ExecutableAdapterSpec) -> None:
     artifact = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "model": META_MODEL,
         "source_report": str(REPORT_PATH),
         "spec": spec.model_dump(),
@@ -196,14 +189,10 @@ def main() -> None:
     print(f"Legacy collection: {spec.legacy_collection_field}")
 
     for rule in spec.item_field_rules:
-        print(
-            f"- {rule.modern_path} -> {rule.legacy_field} "
-            f"using {rule.operation}"
-        )
+        print(f"- {rule.modern_path} -> {rule.legacy_field} using {rule.operation}")
 
     print(f"Specification saved to: {SPEC_PATH}")
 
 
 if __name__ == "__main__":
     main()
-

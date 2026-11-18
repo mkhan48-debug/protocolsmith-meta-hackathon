@@ -3,12 +3,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-
-SCRIPT_PATH = (
-    Path(__file__).resolve().parents[1]
-    / "scripts"
-    / "run_active_probe.py"
-)
+SCRIPT_PATH = Path(__file__).resolve().parents[1] / "scripts" / "run_active_probe.py"
 SPEC = importlib.util.spec_from_file_location(
     "protocolsmith_run_active_probe",
     SCRIPT_PATH,
@@ -63,9 +58,7 @@ def case_by_role(
     role: str,
 ) -> dict[str, Any]:
     return next(
-        case
-        for case in result["cases"]
-        if case["api"] == api and case["role"] == role
+        case for case in result["cases"] if case["api"] == api and case["role"] == role
     )
 
 
@@ -108,25 +101,32 @@ def test_six_case_matrix_confirms_version_specific_mapping(
         "passed",
         "body",
     }
-    assert all(
-        required_fields <= case.keys() for case in result["cases"]
-    )
+    assert all(required_fields <= case.keys() for case in result["cases"])
 
-    assert case_by_role(
-        result,
-        "legacy_v1",
-        "baseline",
-    )["item_count"] == 2
-    assert case_by_role(
-        result,
-        "legacy_v1",
-        "correct_parameter",
-    )["item_count"] == 1
-    assert case_by_role(
-        result,
-        "modern_v2",
-        "wrong_parameter",
-    )["item_count"] == 2
+    assert (
+        case_by_role(
+            result,
+            "legacy_v1",
+            "baseline",
+        )["item_count"]
+        == 2
+    )
+    assert (
+        case_by_role(
+            result,
+            "legacy_v1",
+            "correct_parameter",
+        )["item_count"]
+        == 1
+    )
+    assert (
+        case_by_role(
+            result,
+            "modern_v2",
+            "wrong_parameter",
+        )["item_count"]
+        == 2
+    )
 
 
 def test_probe_rejects_swapped_parameter_that_has_effect(
@@ -136,10 +136,7 @@ def test_probe_rejects_swapped_parameter_that_has_effect(
         result = controlled_request(*args, **kwargs)
         base_url = args[0]
         parameter = args[2]
-        if (
-            base_url == run_active_probe.LEGACY_BASE_URL
-            and parameter == "limit"
-        ):
+        if base_url == run_active_probe.LEGACY_BASE_URL and parameter == "limit":
             result["item_count"] = 1
         return result
 
@@ -152,11 +149,14 @@ def test_probe_rejects_swapped_parameter_that_has_effect(
     result = run_active_probe.execute_probe(proposal())
 
     assert result["deterministic_confirmation"] is False
-    assert case_by_role(
-        result,
-        "legacy_v1",
-        "wrong_parameter",
-    )["passed"] is False
+    assert (
+        case_by_role(
+            result,
+            "legacy_v1",
+            "wrong_parameter",
+        )["passed"]
+        is False
+    )
 
 
 def test_probe_rejects_same_parameter_name(monkeypatch) -> None:
@@ -185,10 +185,7 @@ def test_probe_rejects_failed_or_unreadable_case(monkeypatch) -> None:
         result = controlled_request(*args, **kwargs)
         base_url = args[0]
         parameter = args[2]
-        if (
-            base_url == run_active_probe.MODERN_BASE_URL
-            and parameter == "limit"
-        ):
+        if base_url == run_active_probe.MODERN_BASE_URL and parameter == "limit":
             result["status_code"] = 500
             result["item_count"] = None
         return result
@@ -202,11 +199,14 @@ def test_probe_rejects_failed_or_unreadable_case(monkeypatch) -> None:
     result = run_active_probe.execute_probe(proposal())
 
     assert result["deterministic_confirmation"] is False
-    assert case_by_role(
-        result,
-        "modern_v2",
-        "correct_parameter",
-    )["passed"] is False
+    assert (
+        case_by_role(
+            result,
+            "modern_v2",
+            "correct_parameter",
+        )["passed"]
+        is False
+    )
 
 
 def test_muse_support_cannot_override_deterministic_failure() -> None:

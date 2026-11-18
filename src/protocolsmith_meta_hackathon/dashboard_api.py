@@ -47,26 +47,15 @@ def build_dashboard_context() -> dict[str, Any]:
         {},
     )
     changes = compatibility_plan.get("changes", [])
-    confidences = [
-        float(change.get("confidence", 0))
-        for change in changes
-    ]
+    confidences = [float(change.get("confidence", 0)) for change in changes]
 
-    average_confidence = (
-        sum(confidences) / len(confidences)
-        if confidences
-        else 0
-    )
+    average_confidence = sum(confidences) / len(confidences) if confidences else 0
 
     verification_summary = verification.get("summary", {})
     adapter_spec = adapter.get("spec", {})
     active_execution = active_trace.get("execution", {})
     raw_active_cases = active_execution.get("cases", [])
-    active_cases = (
-        raw_active_cases
-        if isinstance(raw_active_cases, list)
-        else []
-    )
+    active_cases = raw_active_cases if isinstance(raw_active_cases, list) else []
     active_case_passed = sum(
         1
         for case in active_cases
@@ -84,9 +73,7 @@ def build_dashboard_context() -> dict[str, Any]:
     )
     model_identifier = discovery.get("model", "muse-spark-1.3")
     model_display_name = (
-        "Muse Spark 1.3"
-        if model_identifier == "muse-spark-1.3"
-        else model_identifier
+        "Muse Spark 1.3" if model_identifier == "muse-spark-1.3" else model_identifier
     )
 
     return {
@@ -138,12 +125,8 @@ def response_payload(response: httpx.Response) -> dict[str, Any]:
         "url": str(response.request.url),
         "status_code": response.status_code,
         "body": body,
-        "adapter": response.headers.get(
-            "x-protocolsmith-adapter"
-        ),
-        "warning": response.headers.get(
-            "x-protocolsmith-warning"
-        ),
+        "adapter": response.headers.get("x-protocolsmith-adapter"),
+        "warning": response.headers.get("x-protocolsmith-warning"),
     }
 
 
@@ -159,14 +142,10 @@ def evaluate_live_proof(
     bridge_body = bridge["body"]
 
     legacy_orders = (
-        legacy_body.get("orders", [])
-        if isinstance(legacy_body, dict)
-        else []
+        legacy_body.get("orders", []) if isinstance(legacy_body, dict) else []
     )
     bridge_orders = (
-        bridge_body.get("orders", [])
-        if isinstance(bridge_body, dict)
-        else []
+        bridge_body.get("orders", []) if isinstance(bridge_body, dict) else []
     )
 
     legacy_order = legacy_orders[0] if len(legacy_orders) == 1 else {}
@@ -174,8 +153,7 @@ def evaluate_live_proof(
 
     checks = {
         "legacy contract succeeds": (
-            legacy["status_code"] == 200
-            and len(legacy_orders) == 1
+            legacy["status_code"] == 200 and len(legacy_orders) == 1
         ),
         "modern API is directly incompatible": (
             modern["status_code"] == 200
@@ -189,22 +167,17 @@ def evaluate_live_proof(
         "bridge restores customer identifier": (
             isinstance(legacy_body, dict)
             and isinstance(bridge_body, dict)
-            and legacy_body.get("customer_id")
-            == bridge_body.get("customer_id")
+            and legacy_body.get("customer_id") == bridge_body.get("customer_id")
         ),
         "bridge restores one-order collection": (
             len(legacy_orders) == len(bridge_orders) == 1
         ),
-        "bridge preserves order id": (
-            legacy_order.get("id") == bridge_order.get("id")
-        ),
+        "bridge preserves order id": (legacy_order.get("id") == bridge_order.get("id")),
         "bridge preserves monetary value": (
-            legacy_order.get("total_cents")
-            == bridge_order.get("total_cents")
+            legacy_order.get("total_cents") == bridge_order.get("total_cents")
         ),
         "bridge preserves status": (
-            legacy_order.get("status")
-            == bridge_order.get("status")
+            legacy_order.get("status") == bridge_order.get("status")
         ),
         "bridge preserves calendar date": (
             str(legacy_order.get("created_at", ""))[:10]
@@ -213,17 +186,14 @@ def evaluate_live_proof(
         "bridge preserves pagination": (
             isinstance(legacy_body, dict)
             and isinstance(bridge_body, dict)
-            and legacy_body.get("next_page")
-            == bridge_body.get("next_page")
+            and legacy_body.get("next_page") == bridge_body.get("next_page")
         ),
         "bridge discloses lossy reconstruction": (
             isinstance(bridge.get("warning"), str)
             and "midnight UTC" in bridge["warning"]
         ),
         "bridge restores missing-customer status": (
-            legacy_missing["status_code"]
-            == bridge_missing["status_code"]
-            == 404
+            legacy_missing["status_code"] == bridge_missing["status_code"] == 404
         ),
         "bridge restores missing-customer body": (
             legacy_missing["body"] == bridge_missing["body"]
@@ -232,35 +202,17 @@ def evaluate_live_proof(
 
     return {
         "result": "passed" if all(checks.values()) else "failed",
-        "checks": [
-            {"name": name, "passed": passed}
-            for name, passed in checks.items()
-        ],
+        "checks": [{"name": name, "passed": passed} for name, passed in checks.items()],
     }
 
 
 @app.get("/api/live-proof")
 async def live_proof():
-    legacy_url = (
-        f"{LAB_BASE_URL}/v1/customers/"
-        "customer-123/orders"
-    )
-    modern_url = (
-        f"{LAB_BASE_URL}/v2/customers/"
-        "customer-123/orders"
-    )
-    bridge_url = (
-        f"{BRIDGE_BASE_URL}/customers/"
-        "customer-123/orders"
-    )
-    legacy_missing_url = (
-        f"{LAB_BASE_URL}/v1/customers/"
-        "missing-customer/orders"
-    )
-    bridge_missing_url = (
-        f"{BRIDGE_BASE_URL}/customers/"
-        "missing-customer/orders"
-    )
+    legacy_url = f"{LAB_BASE_URL}/v1/customers/customer-123/orders"
+    modern_url = f"{LAB_BASE_URL}/v2/customers/customer-123/orders"
+    bridge_url = f"{BRIDGE_BASE_URL}/customers/customer-123/orders"
+    legacy_missing_url = f"{LAB_BASE_URL}/v1/customers/missing-customer/orders"
+    bridge_missing_url = f"{BRIDGE_BASE_URL}/customers/missing-customer/orders"
 
     try:
         async with httpx.AsyncClient(
@@ -273,29 +225,27 @@ async def live_proof():
                 bridge_response,
                 legacy_missing_response,
                 bridge_missing_response,
-            ) = (
-                await asyncio.gather(
-                    client.get(
-                        legacy_url,
-                        params={"page_size": 1},
-                    ),
-                    client.get(
-                        modern_url,
-                        params={"page_size": 1},
-                    ),
-                    client.get(
-                        bridge_url,
-                        params={"page_size": 1},
-                    ),
-                    client.get(
-                        legacy_missing_url,
-                        params={"page_size": 1},
-                    ),
-                    client.get(
-                        bridge_missing_url,
-                        params={"page_size": 1},
-                    ),
-                )
+            ) = await asyncio.gather(
+                client.get(
+                    legacy_url,
+                    params={"page_size": 1},
+                ),
+                client.get(
+                    modern_url,
+                    params={"page_size": 1},
+                ),
+                client.get(
+                    bridge_url,
+                    params={"page_size": 1},
+                ),
+                client.get(
+                    legacy_missing_url,
+                    params={"page_size": 1},
+                ),
+                client.get(
+                    bridge_missing_url,
+                    params={"page_size": 1},
+                ),
             )
     except httpx.HTTPError:
         return JSONResponse(
@@ -303,8 +253,8 @@ async def live_proof():
             content={
                 "result": "unavailable",
                 "message": (
-                    "Start the laboratory on port 8000 and "
-                    "the dashboard bridge on port 8001."
+                    f"Check the laboratory at {LAB_BASE_URL} and "
+                    f"the dashboard bridge at {BRIDGE_BASE_URL}."
                 ),
             },
         )
@@ -327,11 +277,7 @@ async def live_proof():
         "checks": evaluation["checks"],
         "steps": {
             "legacy_v1": {
-                "verdict": (
-                    "pass"
-                    if evaluation["checks"][0]["passed"]
-                    else "fail"
-                ),
+                "verdict": ("pass" if evaluation["checks"][0]["passed"] else "fail"),
                 **legacy,
             },
             "modern_v2_direct": {
@@ -343,13 +289,8 @@ async def live_proof():
                 **modern,
             },
             "protocolsmith_bridge": {
-                "verdict": (
-                    "pass"
-                    if evaluation["result"] == "passed"
-                    else "fail"
-                ),
+                "verdict": ("pass" if evaluation["result"] == "passed" else "fail"),
                 **bridge,
             },
         },
     }
-

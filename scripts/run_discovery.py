@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -184,8 +184,7 @@ Confidence must be a number between 0 and 1.
 
     user_prompt = (
         "Analyze these controlled API experiments and produce the "
-        "compatibility plan:\n\n"
-        + json.dumps(evidence, indent=2)
+        "compatibility plan:\n\n" + json.dumps(evidence, indent=2)
     )
 
     completion = client.beta.chat.completions.parse(
@@ -209,7 +208,7 @@ def save_report(
     plan: CompatibilityPlan,
 ) -> Path:
     report = {
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "model": META_MODEL,
         "legacy_base_url": LEGACY_BASE_URL,
         "modern_base_url": MODERN_BASE_URL,
@@ -258,4 +257,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

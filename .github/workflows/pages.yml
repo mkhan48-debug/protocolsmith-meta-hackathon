@@ -1,0 +1,64 @@
+name: ProtocolSmith static showcase
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "artifacts/**"
+      - "assets/**"
+      - "docs/**"
+      - "scripts/build_static_showcase.py"
+      - "templates/dashboard.html"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build and deploy recorded-evidence showcase
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e
+        with:
+          version: "0.13.6"
+          enable-cache: true
+
+      - name: Install Python and dependencies
+        run: uv sync --locked --all-groups
+
+      - name: Rebuild static showcase
+        run: uv run python scripts/build_static_showcase.py
+
+      - name: Confirm generated site is committed
+        run: git diff --exit-code -- docs
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload static showcase
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
